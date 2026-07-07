@@ -1,0 +1,6 @@
+{
+  "projects": {
+    "default": "stadiumops-ai-dev",
+    "prod": "stadiumops-ai-prod"
+  }
+}

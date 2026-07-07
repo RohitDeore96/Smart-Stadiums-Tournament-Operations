@@ -1,0 +1,85 @@
+# ==============================================================
+# CI Pipeline — runs on every PR and every push to main
+# --------------------------------------------------------------
+# Goal: fail fast on quality / security / a11y regressions before deploy.
+# ==============================================================
+
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality-gate:
+    name: Lint + Typecheck + Test + Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Full history for change-based caching
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: |
+            pnpm-lock.yaml
+            apps/api/pnpm-lock.yaml
+            apps/web/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Format check
+        run: pnpm format:check
+
+      - name: Lint (all workspaces)
+        run: pnpm lint
+
+      - name: Typecheck (all workspaces)
+        run: pnpm typecheck
+
+      - name: Unit + integration tests with coverage
+        run: pnpm test:coverage
+        env:
+          NODE_ENV: test
+          # Tests use mocked Gemini/Firebase — no real keys needed
+          GEMINI_API_KEY: test-key-mock-do-not-use
+          FIREBASE_PROJECT_ID: stadiumops-test
+
+      - name: Build all workspaces
+        run: pnpm build
+
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: |
+            apps/api/coverage
+            apps/web/coverage
+          retention-days: 7
+
+      - name: Accessibility audit (axe-core)
+        run: pnpm --filter @stadiumops/web test:a11y
+        continue-on-error: true # Phase 3 will enforce this as blocking

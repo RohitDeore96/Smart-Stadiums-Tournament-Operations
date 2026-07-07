@@ -1,0 +1,97 @@
+rules_version = '2';
+
+// ==============================================================
+// StadiumOps AI — Firestore Security Rules (Phase 1 skeleton)
+// --------------------------------------------------------------
+// Full strict rules ship in Phase 3. For Phase 1, we lock down
+// every collection to authenticated users only — no anonymous reads.
+// ==============================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---- Helper functions ----
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && 'role' in request.auth.token
+        && request.auth.token.role == 'admin';
+    }
+
+    function isResponder() {
+      return isSignedIn()
+        && 'role' in request.auth.token
+        && (request.auth.token.role == 'admin'
+            || request.auth.token.role == 'responder');
+    }
+
+    // ---- users/{uid} ----
+    // Each user can read + write only their own profile document.
+    match /users/{uid} {
+      allow read: if isOwner(uid);
+      allow create: if isOwner(uid);
+      allow update: if isOwner(uid)
+        && request.resource.data.role == resource.data.role; // cannot self-promote
+      allow delete: if false; // soft-delete only via admin SDK
+    }
+
+    // ---- chatSessions/{sessionId} ----
+    match /chatSessions/{sessionId} {
+      allow read, write: if isOwner(resource.data.userId)
+        || (request.method == 'create'
+            && request.resource.data.userId == request.auth.uid);
+    }
+
+    // ---- chatSessions/{sessionId}/messages/{messageId} ----
+    match /chatSessions/{sessionId}/messages/{messageId} {
+      allow read: if isSignedIn()
+        && get(/databases/$(database)/documents/chatSessions/$(sessionId))
+             .data.userId == request.auth.uid;
+      // Creates only — never let clients edit/delete chat messages
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // ---- matches, stadiums, crowdZones, announcements ----
+    // Read-only for signed-in users; writes via Admin SDK only.
+    match /matches/{matchId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+    match /stadiums/{stadiumId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+    match /stadiums/{stadiumId}/crowdZones/{zoneId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+    match /announcements/{announcementId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    // ---- incidents/{incidentId} ----
+    // Anyone signed in can report; only responders can update; only admins can delete.
+    match /incidents/{incidentId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn()
+        && request.resource.data.reporterUid == request.auth.uid;
+      allow update: if isResponder();
+      allow delete: if isAdmin();
+    }
+
+    // ---- Default deny (defense in depth) ----
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

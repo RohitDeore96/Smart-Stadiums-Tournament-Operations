@@ -1,0 +1,76 @@
+# Dependabot config — weekly security + version updates
+# Docs: https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+
+updates:
+  # Root package.json
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '06:00'
+      timezone: 'Asia/Kolkata'
+    open-pull-requests-limit: 5
+    labels: ['deps', 'triage']
+    commit-message:
+      prefix: 'chore(deps)'
+    groups:
+      # Group minor + patch updates so we get one PR per ecosystem per week
+      minor-and-patch:
+        update-types:
+          - 'minor'
+          - 'patch'
+    # Major version bumps get individual PRs for safer review
+    ignore:
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
+
+  # API workspace
+  - package-ecosystem: 'npm'
+    directory: '/apps/api'
+    schedule:
+      interval: 'weekly'
+    open-pull-requests-limit: 5
+    labels: ['deps', 'triage', 'api']
+    commit-message:
+      prefix: 'chore(api-deps)'
+
+  # Web workspace
+  - package-ecosystem: 'npm'
+    directory: '/apps/web'
+    schedule:
+      interval: 'weekly'
+    open-pull-requests-limit: 5
+    labels: ['deps', 'triage', 'web']
+    commit-message:
+      prefix: 'chore(web-deps)'
+
+  # Shared workspace
+  - package-ecosystem: 'npm'
+    directory: '/packages/shared'
+    schedule:
+      interval: 'weekly'
+    open-pull-requests-limit: 3
+    labels: ['deps', 'triage', 'shared']
+    commit-message:
+      prefix: 'chore(shared-deps)'
+
+  # GitHub Actions
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+    labels: ['deps', 'ci']
+    commit-message:
+      prefix: 'chore(ci-deps)'
+
+  # Docker base images
+  - package-ecosystem: 'docker'
+    directory: '/apps/api'
+    schedule:
+      interval: 'weekly'
+    labels: ['deps', 'api']
+    commit-message:
+      prefix: 'chore(docker-deps)'

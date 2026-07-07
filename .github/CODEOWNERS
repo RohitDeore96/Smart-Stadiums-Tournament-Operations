@@ -1,0 +1,29 @@
+# CODEOWNERS — every PR must be approved by an owner of the touched area
+# Format: <path-pattern>  <github-username-or-team>
+
+# Root configs
+/.github/                    @RohitDeore96
+/.editorconfig               @RohitDeore96
+/.prettierrc.json            @RohitDeore96
+/.nvmrc                      @RohitDeore96
+/package.json                @RohitDeore96
+/pnpm-workspace.yaml         @RohitDeore96
+
+# Backend (apps/api) — code quality + security critical
+/apps/api/                   @RohitDeore96
+/apps/api/Dockerfile         @RohitDeore96
+/apps/api/src/services/      @RohitDeore96
+
+# Frontend (apps/web) — a11y critical
+/apps/web/                   @RohitDeore96
+
+# Shared types — the DRY keystone, every change ripples
+/packages/shared/            @RohitDeore96
+
+# Firestore rules — security critical
+/infrastructure/             @RohitDeore96
+
+# Docs
+/docs/                       @RohitDeore96
+/README.md                   @RohitDeore96
+/CONTRIBUTING.md             @RohitDeore96

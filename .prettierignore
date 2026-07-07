@@ -1,0 +1,7 @@
+node_modules/
+dist/
+build/
+coverage/
+.firebase/
+*.log
+pnpm-lock.yaml

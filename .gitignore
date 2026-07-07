@@ -1,0 +1,53 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+build/
+.next/
+.turbo/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+*.env
+
+# Service account keys (NEVER commit)
+*-key.json
+service-account*.json
+firebase-service-account*.json
+github-deployer-key.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Firebase
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+
+# TypeScript
+*.tsbuildinfo
+
+# Secrets (defense-in-depth — should never exist here, but just in case)
+secrets/
+.secrets/

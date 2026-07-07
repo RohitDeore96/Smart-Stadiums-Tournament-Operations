@@ -1,0 +1,28 @@
+{
+  "name": "stadiumops-ai",
+  "version": "0.1.0",
+  "private": true,
+  "description": "StadiumOps AI — GenAI-enabled stadium operations platform for FIFA World Cup 2026",
+  "license": "MIT",
+  "packageManager": "pnpm@9.12.0",
+  "engines": {
+    "node": ">=20.11.0"
+  },
+  "scripts": {
+    "dev:api": "pnpm --filter @stadiumops/api dev",
+    "dev:web": "pnpm --filter @stadiumops/web dev",
+    "build": "pnpm -r --stream build",
+    "test": "pnpm -r --stream test",
+    "lint": "pnpm -r --stream lint",
+    "typecheck": "pnpm -r --stream typecheck",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\""
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.11.1",
+    "eslint": "^8.57.1",
+    "prettier": "^3.3.3",
+    "typescript": "^5.6.2",
+    "typescript-eslint": "^8.8.0"
+  }
+}
