@@ -27,11 +27,34 @@ concurrency:
   cancel-in-progress: false # never cancel a mid-deploy
 
 jobs:
+  # ----- Gate: only run deploy if secrets are configured -----
+  # This prevents the deploy job from failing noisily on fresh repos
+  # where cloud accounts haven't been set up yet.
+  check-secrets:
+    name: Check deploy secrets
+    runs-on: ubuntu-latest
+    outputs:
+      has-secrets: ${{ steps.check.outputs.has-secrets }}
+    steps:
+      - id: check
+        run: |
+          if [ -n "${{ secrets.GCP_PROJECT_ID }}" ] && \
+             [ -n "${{ secrets.GCP_SA_KEY }}" ] && \
+             [ -n "${{ secrets.FIREBASE_TOKEN }}" ]; then
+            echo "has-secrets=true" >> "$GITHUB_OUTPUT"
+            echo "✅ All deploy secrets present"
+          else
+            echo "has-secrets=false" >> "$GITHUB_OUTPUT"
+            echo "⚠️  Deploy secrets not configured — skipping deploy job."
+            echo "    See README §'Required GitHub Secrets' for setup instructions."
+          fi
+
   # ----- Job 1: backend → Cloud Run -----
   deploy-api:
     name: Build & Deploy API → Cloud Run
     runs-on: ubuntu-latest
-    needs: [] # could depend on a ci-pass gate
+    needs: check-secrets
+    if: needs.check-secrets.outputs.has-secrets == 'true'
     timeout-minutes: 20
     env:
       GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
@@ -103,6 +126,7 @@ jobs:
     name: Build & Deploy Web → Firebase Hosting
     runs-on: ubuntu-latest
     needs: deploy-api
+    if: needs.check-secrets.outputs.has-secrets == 'true'
     timeout-minutes: 15
 
     steps:

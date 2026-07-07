@@ -217,7 +217,7 @@ async function main(): Promise<void> {
   // console.log('✓ Seeded all stadia');
 }
 
-main().catch((err) => {
+main().catch((err: unknown) => {
   // eslint-disable-next-line no-console
   console.error('Seed failed:', err);
   process.exit(1);

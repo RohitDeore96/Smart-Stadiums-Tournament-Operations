@@ -6,5 +6,4 @@
 export * from './api.js';
 export * from './chat.js';
 export * from './match.js';
-export * from './stadium.js';
 export * from './incident.js';

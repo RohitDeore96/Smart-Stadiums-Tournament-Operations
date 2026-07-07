@@ -28,10 +28,10 @@ export default defineConfig({
     sourcemap: true,
     rollupOptions: {
       output: {
+        // Split react vendor for better caching.
+        // Firebase chunk will be added in Phase 3 when firebase is actually imported.
         manualChunks: {
-          // Split vendor chunks for better caching
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'firebase-vendor': ['firebase/app', 'firebase/auth', 'firebase/firestore'],
         },
       },
     },

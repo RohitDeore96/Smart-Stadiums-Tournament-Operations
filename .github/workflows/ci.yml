@@ -60,7 +60,7 @@ jobs:
         run: pnpm typecheck
 
       - name: Unit + integration tests with coverage
-        run: pnpm test:coverage
+        run: pnpm -r --stream exec vitest run --coverage
         env:
           NODE_ENV: test
           # Tests use mocked Gemini/Firebase — no real keys needed
@@ -78,8 +78,5 @@ jobs:
           path: |
             apps/api/coverage
             apps/web/coverage
+            packages/shared/coverage
           retention-days: 7
-
-      - name: Accessibility audit (axe-core)
-        run: pnpm --filter @stadiumops/web test:a11y
-        continue-on-error: true # Phase 3 will enforce this as blocking

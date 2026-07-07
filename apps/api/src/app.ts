@@ -69,7 +69,7 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
     errorResponseBuilder: (_req, context) => ({
       error: {
         code: 'RATE_LIMITED',
-        message: `Rate limit exceeded. Try again in ${Math.ceil(context.ttl / 1000)}s.`,
+        message: `Rate limit exceeded. Try again in ${String(Math.ceil(context.ttl / 1000))}s.`,
         requestId: _req.id,
       },
     }),
@@ -116,7 +116,7 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
   });
 
   // ---- Health route (Phase 1 only — full routes arrive in Phase 2) ----
-  app.get('/api/v1/health', async () => {
+  app.get('/api/v1/health', () => {
     return {
       data: {
         status: 'ok',

@@ -8,6 +8,10 @@ build/
 .next/
 .turbo/
 
+# Vite-generated config artifacts (don't commit compiled configs)
+vite.config.js
+vite.config.d.ts
+
 # Environment variables
 .env
 .env.local

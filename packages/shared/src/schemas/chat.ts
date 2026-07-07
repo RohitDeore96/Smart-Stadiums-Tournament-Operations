@@ -19,7 +19,8 @@ const LOCALES = ['en', 'es', 'fr', 'ar', 'de', 'pt', 'ja', 'ko', 'zh'] as const;
  */
 export const sanitizeUserText = (raw: string): string =>
   raw
-    // Remove control chars except \n, \r, \t
+    // Remove control chars except \n, \r, \t.
+    // eslint-disable-next-line no-control-regex -- intentional: stripping control chars is the purpose of this regex
     .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '')
     // Remove zero-width and bidi-override characters
     .replace(/[\u200B-\u200F\u202A-\u202E\u2066-\u2069\uFEFF]/g, '')

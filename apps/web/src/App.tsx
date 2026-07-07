@@ -10,7 +10,7 @@
  *   - Skip link is the first focusable element
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactElement } from 'react';
 
 interface HealthResponse {
   data: {
@@ -21,18 +21,20 @@ interface HealthResponse {
   };
 }
 
-export function App(): JSX.Element {
+export function App(): ReactElement {
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch('/api/v1/health')
       .then((r) => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        if (!r.ok) throw new Error(`HTTP ${String(r.status)}`);
         return r.json() as Promise<HealthResponse>;
       })
       .then(setHealth)
-      .catch((e: Error) => setError(e.message));
+      .catch((e: unknown) => {
+        setError(e instanceof Error ? e.message : 'Unknown error');
+      });
   }, []);
 
   return (
