@@ -59,8 +59,8 @@ jobs:
       - name: Typecheck (all workspaces)
         run: pnpm typecheck
 
-      - name: Unit + integration tests with coverage
-        run: pnpm -r --stream exec vitest run --coverage
+      - name: Unit + integration tests
+        run: pnpm test
         env:
           NODE_ENV: test
           # Tests use mocked Gemini/Firebase — no real keys needed
@@ -69,14 +69,3 @@ jobs:
 
       - name: Build all workspaces
         run: pnpm build
-
-      - name: Upload coverage artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: |
-            apps/api/coverage
-            apps/web/coverage
-            packages/shared/coverage
-          retention-days: 7
