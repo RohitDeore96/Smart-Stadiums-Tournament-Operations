@@ -1424,3 +1424,220 @@ body {
   background-color: var(--color-border);
 }
 
+
+/* ==============================================================
+   Phase 4 — Additional interactivity upgrades
+   ============================================================== */
+
+/* ---- Fan Sentiment Widget ---- */
+.sentiment-widget {
+  background-color: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+}
+
+.sentiment-question {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-4);
+}
+
+.sentiment-buttons {
+  display: flex;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.sentiment-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  background-color: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.sentiment-btn:hover {
+  background-color: var(--color-border);
+  transform: translateY(-2px);
+}
+
+.sentiment-icon {
+  font-size: var(--font-size-2xl);
+}
+
+.sentiment-label {
+  font-size: var(--font-size-xs);
+  text-transform: capitalize;
+}
+
+.sentiment-voted {
+  padding: var(--space-3);
+  background-color: rgba(74, 222, 128, 0.1);
+  border: 1px solid var(--color-success);
+  border-radius: var(--radius-md);
+  color: var(--color-success);
+  font-size: var(--font-size-sm);
+  text-align: center;
+  margin-bottom: var(--space-4);
+}
+
+.sentiment-chart {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.sentiment-bar-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.sentiment-bar-label {
+  width: 80px;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  text-transform: capitalize;
+}
+
+.sentiment-bar-track {
+  flex: 1;
+  height: 20px;
+  background-color: var(--color-bg-elevated);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.sentiment-bar-fill {
+  height: 100%;
+  border-radius: var(--radius-sm);
+  transition: width 0.5s ease;
+}
+
+.sentiment-bar-percent {
+  width: 40px;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-text);
+  text-align: right;
+}
+
+.sentiment-summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-border);
+}
+
+/* ---- QR Code Display ---- */
+.incident-qr-section {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--space-6);
+}
+
+.qr-code-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  background-color: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.qr-code-image {
+  border-radius: var(--radius-md);
+  background-color: #fff;
+  padding: var(--space-2);
+}
+
+.qr-code-label {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.qr-download-btn {
+  font-size: var(--font-size-xs);
+  padding: var(--space-1) var(--space-3);
+}
+
+/* ---- Translate Button ---- */
+.translate-button-container {
+  position: relative;
+  display: inline-block;
+}
+
+.translate-btn {
+  white-space: nowrap;
+}
+
+.translate-dropdown {
+  position: absolute;
+  top: calc(100% + var(--space-1));
+  left: 0;
+  background-color: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  list-style: none;
+  min-width: 120px;
+  z-index: 200;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.translate-option {
+  display: block;
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  background: none;
+  border: none;
+  color: var(--color-text);
+  text-align: left;
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.translate-option:hover {
+  background-color: var(--color-bg-card);
+}
+
+.translate-status {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  margin-top: var(--space-1);
+}
+
+.translated-text {
+  margin-top: var(--space-2);
+  padding: var(--space-2);
+  background-color: var(--color-bg-elevated);
+  border-radius: var(--radius-sm);
+  border-left: 2px solid var(--color-primary);
+}
+
+.translated-content {
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+  margin-bottom: var(--space-1);
+}
+
+/* ---- Dashboard widgets grid ---- */
+.dashboard-widgets {
+  margin-top: var(--space-6);
+}

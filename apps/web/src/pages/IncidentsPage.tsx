@@ -1,6 +1,7 @@
 /**
  * @file apps/web/src/pages/IncidentsPage.tsx
  * @description Incidents page — list + report form toggle.
+ *   Shows QR code on successful incident creation.
  */
 
 import { type FC, useState } from 'react';
@@ -9,20 +10,24 @@ import { useI18n } from '../context/I18nContext.js';
 import { useIncidents } from '../hooks/useIncidents.js';
 import { IncidentCard } from '../components/IncidentCard.js';
 import { IncidentForm } from '../components/IncidentForm.js';
+import { QRCodeDisplay } from '../components/QRCodeDisplay.js';
 
 export const IncidentsPage: FC = () => {
   const { t } = useI18n();
   const { incidents, isLoading, error, create, refresh } = useIncidents();
   const [showForm, setShowForm] = useState(false);
   const [successMessage, setSuccessMessage] = useState(false);
+  const [createdIncidentId, setCreatedIncidentId] = useState<string | null>(null);
 
   const handleSubmit = async (input: IncidentCreateInput): Promise<void> => {
-    await create(input);
+    const incident = await create(input);
     setShowForm(false);
     setSuccessMessage(true);
+    setCreatedIncidentId(incident.id);
     setTimeout(() => {
       setSuccessMessage(false);
-    }, 5000);
+      setCreatedIncidentId(null);
+    }, 15000);
   };
 
   return (
@@ -52,6 +57,17 @@ export const IncidentsPage: FC = () => {
         <div className="success-banner" role="status" aria-live="polite">
           <span aria-hidden="true">✓</span>
           {t('incidents.success')}
+        </div>
+      )}
+
+      {/* QR code for the most recently created incident */}
+      {successMessage && createdIncidentId && (
+        <div className="incident-qr-section">
+          <QRCodeDisplay
+            value={`https://smart-stadiums-tournament-operation-nine.vercel.app/#/incidents?id=${createdIncidentId}`}
+            size={180}
+            label="Scan to view this incident"
+          />
         </div>
       )}
 

@@ -15,6 +15,7 @@ import { IncidentCard } from '../components/IncidentCard.js';
 import { StadiumMap } from '../components/StadiumMap.js';
 import { MatchTicker } from '../components/MatchTicker.js';
 import { AnnouncementsTicker } from '../components/AnnouncementsTicker.js';
+import { FanSentimentWidget } from '../components/FanSentimentWidget.js';
 
 export const DashboardPage: FC = () => {
   const { t } = useI18n();
@@ -119,6 +120,10 @@ export const DashboardPage: FC = () => {
           </div>
         )}
       </section>
+
+      <div className="dashboard-widgets">
+        <FanSentimentWidget />
+      </div>
     </>
   );
 };

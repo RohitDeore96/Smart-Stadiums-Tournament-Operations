@@ -2,12 +2,13 @@
  * @file apps/web/src/components/MessageBubble.tsx
  * @description Single chat message bubble — user or assistant.
  *   Renders emergency banner if escalated. Shows suggested actions.
- *   Supports text-to-speech on assistant messages.
+ *   Supports text-to-speech and translation on assistant messages.
  */
 
 import { type FC } from 'react';
 import type { ChatMessage } from '../hooks/useChat.js';
 import { useI18n } from '../context/I18nContext.js';
+import { TranslateButton } from './TranslateButton.js';
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -16,7 +17,7 @@ interface MessageBubbleProps {
 }
 
 export const MessageBubble: FC<MessageBubbleProps> = ({ message, onSpeak, speaking }) => {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const isUser = message.role === 'user';
   const isEmergency = Boolean(message.emergencyEscalated);
   const timeStr = new Date(message.createdAt).toLocaleTimeString();
@@ -55,6 +56,9 @@ export const MessageBubble: FC<MessageBubbleProps> = ({ message, onSpeak, speaki
             >
               {speaking ? '⏹️' : '🔊'}
             </button>
+          )}
+          {!isUser && message.content && message.content.length > 10 && (
+            <TranslateButton originalText={message.content} originalLocale={locale} />
           )}
           {message.suggestedActions && message.suggestedActions.length > 0 && (
             <div className="message-actions" role="group" aria-label="Suggested actions">
