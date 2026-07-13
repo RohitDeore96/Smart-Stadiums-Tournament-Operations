@@ -39,7 +39,7 @@ StadiumOps AI is a GenAI-enabled platform that helps **volunteers** and **fans**
 | **Code Quality**  | TS `strict: true`, Zod at every API boundary, files ≤ 300 LOC, DRY shared types package             |
 | **Security**      | Input validation, 3-layer prompt-injection defense, strict Firestore rules, CSP + security headers  |
 | **Efficiency**    | SSE streaming for chat, LRU cache for repeat queries, code-split chunks, mock-data fallback         |
-| **Testing**       | Vitest unit tests (83 tests) covering safety, intent, prompt, schemas, env, health                  |
+| **Testing**       | Vitest unit tests (90 tests) covering safety, intent, prompt, schemas, env, health                  |
 | **Accessibility** | WCAG 2.1 AA — semantic HTML, ARIA, keyboard nav, 9 languages + RTL Arabic, `prefers-reduced-motion` |
 
 ## 🏗️ Monorepo layout
@@ -53,17 +53,17 @@ stadiumops-ai/
 ├── apps/
 │   ├── web/                      Vite + React 18 + TypeScript (DEPLOYED to Vercel)
 │   │   ├── src/
-│   │   │   ├── components/       9 accessible components
+│   │   │   ├── components/       13 accessible components
 │   │   │   ├── pages/            Dashboard, Chat, Incidents
 │   │   │   ├── hooks/            useChat, useCrowdData, useIncidents
 │   │   │   ├── services/         firebase, crowd, incident, chat, mockData
 │   │   │   ├── context/          I18nContext (9 languages)
 │   │   │   └── i18n/             translations.ts
 │   │   └── tests/                Vitest + Testing Library
-│   └── api/                      Fastify backend (DESIGNED for Cloud Run, not deployed)
+│   └── api/                      Vercel serverless (DEPLOYED)
 │       ├── src/                  Full route set: chat, matches, stadiums, incidents, announcements
 │       ├── tests/                Unit + integration tests
-│       └── Dockerfile            3-stage distroless build
+
 ├── packages/
 │   └── shared/                   DRY keystone — Zod schemas + TS types
 ├── infrastructure/
@@ -126,7 +126,7 @@ If Firebase env vars are not set, the app automatically falls back to **mock dat
 | `pnpm dev:web`              | Start frontend dev server (Vite on :5173)    |
 | `pnpm dev:api`              | Start Vercel dev server (:3000)              |
 | `pnpm build`                | Build all workspaces                         |
-| `pnpm test`                 | Run all unit + integration tests (83 tests)  |
+| `pnpm test`                 | Run all unit + integration tests (90 tests)  |
 | `pnpm lint`                 | ESLint across all workspaces (zero warnings) |
 | `pnpm typecheck`            | `tsc --noEmit` across all workspaces         |
 | `pnpm format`               | Prettier write                               |
@@ -134,11 +134,11 @@ If Firebase env vars are not set, the app automatically falls back to **mock dat
 
 ## 🧪 Phases
 
-| Phase | Status  | Deliverables                                                                   |
-| ----- | ------- | ------------------------------------------------------------------------------ |
-| **1** | ✅ Done | Architecture, data models, API contracts, Dockerfile, CI/CD, security rules    |
-| **2** | ✅ Done | Cloud Run backend, Gemini service w/ prompt-injection defense, full test suite |
-| **3** | ✅ Done | Accessible React frontend, Firebase client SDK, strict Firestore rules, i18n   |
+| Phase | Status  | Deliverables                                                                           |
+| ----- | ------- | -------------------------------------------------------------------------------------- |
+| **1** | ✅ Done | Architecture, data models, API contracts, CI/CD, security rules                        |
+| **2** | ✅ Done | Vercel serverless backend, Gemini service w/ prompt-injection defense, full test suite |
+| **3** | ✅ Done | Accessible React frontend, Firebase client SDK, strict Firestore rules, i18n           |
 
 ## 🛡️ Security
 

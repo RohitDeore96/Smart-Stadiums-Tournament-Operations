@@ -75,7 +75,7 @@ export const FanSentimentWidget: FC = () => {
   return (
     <section className="sentiment-widget" aria-label="Fan sentiment poll">
       <h3 className="section-title">📊 Fan Sentiment</h3>
-      <p className="sentiment-question">How's your experience today?</p>
+      <p className="sentiment-question">How's your experience? (Live simulated poll)</p>
 
       {!userVoted ? (
         <div className="sentiment-buttons" role="group" aria-label="Vote on your experience">

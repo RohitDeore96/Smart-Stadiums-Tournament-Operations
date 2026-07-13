@@ -7,13 +7,7 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-const MODELS_TO_TEST = [
-  'gemini-2.5-flash',
-  'gemini-3.1-flash-lite',
-  'gemini-3.1-flash',
-  'gemini-2.0-flash',
-  'gemini-flash-latest',
-];
+const MODELS_TO_TEST = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-flash-latest'];
 
 export default async function handler(_req: VercelRequest, res: VercelResponse): Promise<void> {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -59,10 +53,10 @@ export default async function handler(_req: VercelRequest, res: VercelResponse):
     for (const model of MODELS_TO_TEST) {
       try {
         const testResponse = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey ?? ''}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
           {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey ?? '' },
             body: JSON.stringify({
               contents: [{ parts: [{ text: 'Say "OK" in one word.' }] }],
             }),
@@ -170,8 +164,6 @@ export default async function handler(_req: VercelRequest, res: VercelResponse):
         freeTierInfo: {
           indiaDailyReset: '12:30 PM IST (DST) / 1:30 PM IST (standard)',
           models: {
-            'gemini-3.1-flash': '1,500 RPD, 10 RPM (FREE in India)',
-            'gemini-3.1-flash-lite': '1,000 RPD, 15 RPM (FREE in India)',
             'gemini-2.0-flash': 'limit: 0 (NOT free in India)',
           },
           billingRequired: false,

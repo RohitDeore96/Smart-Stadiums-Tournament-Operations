@@ -1,7 +1,7 @@
 /**
  * Root ESLint flat config for the StadiumOps AI monorepo.
  *
- * Each workspace (apps/api, apps/web, packages/shared) extends this and adds
+ * Each workspace (api, apps/web, packages/shared) extends this and adds
  * its own specifics. Run `pnpm lint` from the root to lint everything.
  *
  * Philosophy: strict by default, opt-out only with a written justification
@@ -62,7 +62,7 @@ module.exports = tseslint.config(
           },
         },
       ],
-      // Fastify plugin functions are async by convention (return Promise<void>)
+      // Serverless functions are async by convention (return Promise<void>)
       // even when their body has no top-level await.
       '@typescript-eslint/require-await': 'off',
       // Firebase Admin SDK types are tricky — `??` is defensive even when TS thinks it's unnecessary
@@ -94,7 +94,7 @@ module.exports = tseslint.config(
     },
   },
 
-  // -------- Route files: Fastify's preHandler type doesn't play nice with
+  // -------- Route files: preHandler type doesn't play nice with
   //         no-misused-promises. Disable it for route definitions. --------
   {
     files: ['**/src/routes/**/*.ts'],
@@ -104,7 +104,7 @@ module.exports = tseslint.config(
   },
 
   // -------- Vercel serverless functions: console.log is the standard
-  //         logging mechanism (no pino in serverless for size) --------
+  //         logging mechanism (console.log in serverless for size) --------
   {
     files: ['api/**/*.ts'],
     rules: {

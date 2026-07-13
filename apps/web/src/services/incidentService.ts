@@ -25,7 +25,7 @@ export async function getIncidents(): Promise<Incident[]> {
 
 async function getIncidentsFromFirestore(): Promise<Incident[]> {
   const db = getFirestore();
-  if (!db) return getIncidents();
+  if (!db) return getMockIncidents(); // FIX: fall back to mock directly, not getIncidents()
 
   try {
     const { collection, getDocs, orderBy, query } = await import('firebase/firestore');
@@ -37,8 +37,13 @@ async function getIncidentsFromFirestore(): Promise<Incident[]> {
     }));
   } catch (err) {
     console.error('[incidentService] Firestore read failed:', err);
-    return getIncidents();
+    return getMockIncidents(); // FIX: fall back to mock directly
   }
+}
+
+/** Returns mock incidents sorted by most recent first. */
+function getMockIncidents(): Incident[] {
+  return [...mockIncidents].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
 /**
@@ -122,7 +127,7 @@ async function updateIncidentInFirestore(
   input: IncidentUpdateInput,
 ): Promise<Incident | null> {
   const db = getFirestore();
-  if (!db) return updateIncident(id, input);
+  if (!db) return updateIncidentMock(id, input); // FIX: don't re-enter public function
 
   try {
     const { doc, updateDoc, getDoc } = await import('firebase/firestore');
@@ -136,6 +141,22 @@ async function updateIncidentInFirestore(
     return { id: snapshot.id, ...(snapshot.data() as Omit<Incident, 'id'>) };
   } catch (err) {
     console.error('[incidentService] Firestore update failed:', err);
-    return updateIncident(id, input);
+    return updateIncidentMock(id, input); // FIX: fall back to mock directly
   }
+}
+
+/** Updates a mock incident in memory. */
+function updateIncidentMock(id: string, input: IncidentUpdateInput): Incident | null {
+  const idx = mockIncidents.findIndex((i) => i.id === id);
+  if (idx === -1) return null;
+
+  const existing = mockIncidents[idx];
+  if (!existing) return null;
+
+  mockIncidents[idx] = {
+    ...existing,
+    ...(input as Partial<Incident>),
+    updatedAt: new Date().toISOString(),
+  };
+  return mockIncidents[idx] ?? null;
 }

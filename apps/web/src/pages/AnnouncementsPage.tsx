@@ -7,6 +7,7 @@
  */
 
 import { type FC, useState, useEffect } from 'react';
+import { useI18n } from '../context/I18nContext.js';
 
 interface Announcement {
   id: string;
@@ -23,6 +24,7 @@ const SEVERITY_ICONS: Record<string, string> = {
 };
 
 export const AnnouncementsPage: FC = () => {
+  const { t } = useI18n();
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [text, setText] = useState('');
   const [severity, setSeverity] = useState<Announcement['severity']>('info');
@@ -84,7 +86,7 @@ export const AnnouncementsPage: FC = () => {
       {success && (
         <div className="success-banner" role="status" aria-live="polite">
           <span aria-hidden="true">✓</span>
-          Announcement published successfully.
+          {t('announcements.success')}
         </div>
       )}
 
@@ -92,7 +94,7 @@ export const AnnouncementsPage: FC = () => {
         <form className="incident-form" onSubmit={handleSubmit}>
           <div className="form-field">
             <label htmlFor="ann-text" className="form-label">
-              Announcement Text
+              {t('announcements.text')}
             </label>
             <textarea
               id="ann-text"
@@ -129,16 +131,18 @@ export const AnnouncementsPage: FC = () => {
 
           <div className="form-actions">
             <button type="submit" className="btn btn-primary" disabled={!text.trim()}>
-              📢 Publish
+              📢 {t('announcements.publish')}
             </button>
           </div>
         </form>
       </section>
 
       <section aria-label="Published announcements">
-        <h3 className="section-title">Published Announcements ({String(announcements.length)})</h3>
+        <h3 className="section-title">
+          {t('announcements.published')} ({String(announcements.length)})
+        </h3>
         {announcements.length === 0 ? (
-          <p className="empty-state">No announcements published yet.</p>
+          <p className="empty-state">{t('announcements.empty')}</p>
         ) : (
           <div className="incidents-list">
             {announcements.map((ann) => (

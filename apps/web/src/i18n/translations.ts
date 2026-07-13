@@ -75,7 +75,12 @@ export type TranslationKey =
   | 'common.loading'
   | 'common.error'
   | 'common.retry'
-  | 'common.refresh';
+  | 'common.refresh'
+  | 'announcements.text'
+  | 'announcements.publish'
+  | 'announcements.published'
+  | 'announcements.empty'
+  | 'announcements.success';
 
 type Translations = Record<TranslationKey, string>;
 
@@ -149,6 +154,11 @@ const en: Translations = {
   'common.error': 'Something went wrong',
   'common.retry': 'Retry',
   'common.refresh': 'Refresh',
+  'announcements.text': 'Announcement Text',
+  'announcements.publish': 'Publish',
+  'announcements.published': 'Published Announcements',
+  'announcements.empty': 'No announcements published yet.',
+  'announcements.success': 'Announcement published successfully.',
 };
 
 const es: Translations = {

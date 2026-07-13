@@ -40,13 +40,7 @@ export interface GeminiReply {
 // Models ordered by free-tier availability in India (2026):
 // 3.x models have free tier (1500 RPD) but may need AIzaSy key format
 // 2.x models work with AQ. keys but have limit:0 in India
-const MODEL_NAMES = [
-  'gemini-2.5-flash',
-  'gemini-3.1-flash-lite',
-  'gemini-3.1-flash',
-  'gemini-2.0-flash',
-  'gemini-flash-latest',
-];
+const MODEL_NAMES = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-flash-latest'];
 const API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 const MAX_RETRIES = 2;
 const RETRY_DELAY_MS = 500;
@@ -103,7 +97,7 @@ async function callGeminiModel(
     throw new GeminiModelError(400, 'Invalid key format. Use AIzaSy or AQ. prefix', model);
   }
 
-  const endpoint = `${API_BASE}/${model}:generateContent?key=${apiKey}`;
+  const endpoint = `${API_BASE}/${model}:generateContent`;
   const requestBody = {
     system_instruction: { parts: [{ text: systemPrompt }] },
     contents: [{ parts: [{ text: userMessage }] }],
@@ -121,7 +115,7 @@ async function callGeminiModel(
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     const response = await fetch(endpoint, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
       body: JSON.stringify(requestBody),
     });
 
@@ -191,7 +185,7 @@ async function* callGeminiModelStream(
     throw new GeminiModelError(400, 'Invalid key format', model);
   }
 
-  const endpoint = `${API_BASE}/${model}:streamGenerateContent?key=${apiKey}&alt=sse`;
+  const endpoint = `${API_BASE}/${model}:streamGenerateContent?alt=sse`;
   const requestBody = {
     system_instruction: { parts: [{ text: systemPrompt }] },
     contents: [{ parts: [{ text: userMessage }] }],
@@ -206,7 +200,7 @@ async function* callGeminiModelStream(
 
   const response = await fetch(endpoint, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
     body: JSON.stringify(requestBody),
   });
 
