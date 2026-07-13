@@ -37,8 +37,16 @@ export interface GeminiReply {
   cached: boolean;
 }
 
-// Try these models in order — keep it to 2 for fast response
-const MODEL_NAMES = ['gemini-flash-latest', 'gemini-2.0-flash'];
+// Models ordered by free-tier availability in India (2026):
+// 3.x models have free tier (1500 RPD) but may need AIzaSy key format
+// 2.x models work with AQ. keys but have limit:0 in India
+const MODEL_NAMES = [
+  'gemini-2.5-flash',
+  'gemini-3.1-flash-lite',
+  'gemini-3.1-flash',
+  'gemini-2.0-flash',
+  'gemini-flash-latest',
+];
 const API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 const MAX_RETRIES = 2;
 const RETRY_DELAY_MS = 500;
@@ -188,6 +196,15 @@ async function callGeminiREST(
         errors.push(errMsg);
         console.error(`[gemini] ${errMsg}`);
 
+        // ACCESS_TOKEN_TYPE_UNSUPPORTED — AQ. key can't access newer models
+        if (
+          err.message.includes('ACCESS_TOKEN_TYPE_UNSUPPORTED') ||
+          err.message.includes('invalid authentication credentials')
+        ) {
+          // Try next model — older models might work with AQ. keys
+          continue;
+        }
+
         // Location error — stop trying, all models will fail
         if (err.message.includes('location is not supported')) {
           throw new Error(
@@ -205,6 +222,17 @@ async function callGeminiREST(
         throw err;
       }
     }
+  }
+
+  // Check if the key is AQ. format — it can't access free-tier models in India
+  const apiKey = getApiKey();
+  if (apiKey.startsWith('AQ.')) {
+    throw new Error(
+      'Your AQ. format API key cannot access the free-tier Gemini models (2.5+, 3.x). ' +
+        'The older 2.0 models have zero free quota in India. ' +
+        'Solution: Get a traditional AIzaSy... format key from https://aistudio.google.com/app/apikey ' +
+        '(click "Create API key" — if it shows AQ. format, try creating it in a new Google Cloud project).',
+    );
   }
 
   throw new Error(`All Gemini models failed: ${errors.join(' | ')}`);

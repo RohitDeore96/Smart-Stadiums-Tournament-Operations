@@ -1,11 +1,19 @@
 /**
  * @file api/diagnostics.ts
  * @description Diagnostics endpoint — checks Gemini API key, validates format,
- *   and tests it with a real API call. Shows the actual error message.
- *   Accepts both AIzaSy (legacy) and AQ. (newer AI Studio) key formats.
+ *   tests multiple models, and shows which ones are accessible.
+ *   Provides actionable recommendations based on the key type and model availability.
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+
+const MODELS_TO_TEST = [
+  'gemini-2.5-flash',
+  'gemini-3.1-flash-lite',
+  'gemini-3.1-flash',
+  'gemini-2.0-flash',
+  'gemini-flash-latest',
+];
 
 export default async function handler(_req: VercelRequest, res: VercelResponse): Promise<void> {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -13,9 +21,8 @@ export default async function handler(_req: VercelRequest, res: VercelResponse):
   const keyLength = apiKey?.length ?? 0;
   const keyPrefix = apiKey ? `${apiKey.slice(0, 6)}...` : 'none';
 
-  // Accept both key formats
   const isLegacyFormat = Boolean(apiKey && apiKey.startsWith('AIzaSy') && apiKey.length >= 35);
-  const isNewerFormat = Boolean(apiKey?.startsWith('AQ.'));
+  const isNewerFormat = Boolean(apiKey && apiKey.startsWith('AQ.'));
   const isValidFormat = isLegacyFormat || isNewerFormat;
 
   let keyType = 'Unknown';
@@ -24,26 +31,32 @@ export default async function handler(_req: VercelRequest, res: VercelResponse):
   if (!hasKey) {
     keyType = 'Not set ❌';
     recommendation =
-      'Set GEMINI_API_KEY in Vercel env vars. Get a FREE key at https://aistudio.google.com/app/apikey (no billing required)';
+      'Set GEMINI_API_KEY in Vercel env vars. Get a FREE key at https://aistudio.google.com/app/apikey';
   } else if (isLegacyFormat) {
-    keyType = 'AI Studio legacy (AIzaSy...) ✅';
-    recommendation = 'Key format valid. Testing API call below...';
+    keyType = 'AI Studio legacy (AIzaSy...) ✅ — works with all models';
+    recommendation = 'Key format is optimal. Testing models below...';
   } else if (isNewerFormat) {
-    keyType = 'AI Studio newer (AQ....) ✅';
-    recommendation = 'Key format valid. Testing API call below...';
-  } else {
-    keyType = `Unknown format (${keyPrefix}) ⚠️`;
+    keyType = 'AI Studio newer (AQ....) ⚠️ — may not work with 2.5+/3.x models';
     recommendation =
-      'Key format not recognized. AI Studio keys start with "AIzaSy" or "AQ.". Get a FREE key at https://aistudio.google.com/app/apikey';
+      'AQ. keys cannot access newer free-tier models in India. Get an AIzaSy... key from https://aistudio.google.com/app/apikey for full model access.';
+  } else {
+    keyType = `Unknown format (${keyPrefix}) ❌`;
+    recommendation = 'Get a valid AI Studio key from https://aistudio.google.com/app/apikey';
   }
 
-  // Test the key with a real API call
-  let apiTestResult = null;
-  if (isValidFormat && apiKey) {
-    const models = ['gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-flash-latest'];
-    const errors: string[] = [];
+  // Test each model
+  const modelResults: Array<{
+    model: string;
+    status: 'success' | 'failed';
+    httpStatus?: number;
+    error?: string;
+    responsePreview?: string;
+  }> = [];
 
-    for (const model of models) {
+  let workingModel: string | null = null;
+
+  if (isValidFormat && apiKey) {
+    for (const model of MODELS_TO_TEST) {
       try {
         const testResponse = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey ?? ''}`,
@@ -58,53 +71,90 @@ export default async function handler(_req: VercelRequest, res: VercelResponse):
 
         if (testResponse.ok) {
           const data = (await testResponse.json()) as {
-            candidates?: { content?: { parts?: { text?: string }[] } }[];
+            candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
           };
           const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text ?? 'empty';
-          apiTestResult = {
-            status: 'success ✅',
-            workingModel: model,
+          modelResults.push({
+            model,
+            status: 'success',
             httpStatus: testResponse.status,
             responsePreview: responseText.slice(0, 50),
-            message: 'Gemini API is working! The chat endpoint should function correctly.',
-          };
-          break;
+          });
+          if (!workingModel) workingModel = model;
         } else {
           const errorText = await testResponse.text();
-          let errorMsg = errorText.slice(0, 300);
+          let errorMsg = errorText.slice(0, 200);
           try {
             const errorJson = JSON.parse(errorText) as { error?: { message?: string } };
             errorMsg = errorJson.error?.message ?? errorMsg;
           } catch {
             // Keep raw
           }
-
-          errors.push(`${model}: HTTP ${String(testResponse.status)} - ${errorMsg.slice(0, 100)}`);
-
-          // If location error, stop — all models will fail
-          if (errorMsg.includes('location is not supported')) {
-            apiTestResult = {
-              status: 'failed ❌',
-              error: 'User location is not supported for the API use',
-              httpStatus: testResponse.status,
-              testedModels: errors,
-              message:
-                'Gemini API is geo-restricted in your region. Create a new API key while connected to a VPN in a supported region (US, UK, etc.). See: https://ai.google.dev/gemini-api/docs/regions',
-            };
-            break;
-          }
+          modelResults.push({
+            model,
+            status: 'failed',
+            httpStatus: testResponse.status,
+            error: errorMsg.slice(0, 150),
+          });
         }
       } catch (err) {
-        errors.push(`${model}: ${err instanceof Error ? err.message : 'network error'}`);
+        modelResults.push({
+          model,
+          status: 'failed',
+          error: err instanceof Error ? err.message : 'network error',
+        });
       }
     }
+  }
 
-    apiTestResult ??= {
-      status: 'failed ❌',
-      testedModels: errors,
-      message:
-        'All models failed. This is likely a regional restriction. Try creating a new key from a supported region.',
+  // Generate recommendation based on results
+  let apiTestResult = null;
+  if (workingModel) {
+    apiTestResult = {
+      status: 'success ✅',
+      workingModel,
+      message: `Gemini API is working with model: ${workingModel}! The chat endpoint should function correctly.`,
+      modelResults,
     };
+  } else if (modelResults.length > 0) {
+    const hasLocationError = modelResults.some((r) =>
+      r.error?.includes('location is not supported'),
+    );
+    const hasAuthError = modelResults.some((r) =>
+      r.error?.includes('ACCESS_TOKEN_TYPE_UNSUPPORTED'),
+    );
+    const hasQuotaError = modelResults.every(
+      (r) => r.error?.includes('limit: 0') || r.error?.includes('quota'),
+    );
+
+    if (hasLocationError) {
+      apiTestResult = {
+        status: 'failed ❌',
+        message:
+          'Gemini API is geo-restricted in your region. Create a new key while connected to a VPN (US/UK).',
+        modelResults,
+      };
+    } else if (hasAuthError && isNewerFormat) {
+      apiTestResult = {
+        status: 'failed ❌',
+        message:
+          'Your AQ. key cannot access the free-tier models (2.5+, 3.x). You need an AIzaSy... format key. Go to https://aistudio.google.com/app/apikey and create a key — if it shows AQ. format, try creating it in a new Google Cloud project.',
+        modelResults,
+      };
+    } else if (hasQuotaError) {
+      apiTestResult = {
+        status: 'failed ❌',
+        message:
+          'All models have zero free-tier quota. The free tier resets at 12:30 PM IST. If this persists, the models may not be available in your region. Try getting an AIzaSy... key.',
+        modelResults,
+      };
+    } else {
+      apiTestResult = {
+        status: 'failed ❌',
+        message: 'All models failed. See model results below for details.',
+        modelResults,
+      };
+    }
   }
 
   res.status(200).json({
@@ -117,13 +167,19 @@ export default async function handler(_req: VercelRequest, res: VercelResponse):
         keyPrefix,
         isValidFormat,
         keyType,
-        models: ['gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-flash-latest'],
+        models: MODELS_TO_TEST,
         apiEndpoint: 'generativelanguage.googleapis.com/v1beta',
         freeTierInfo: {
-          rpm: 15,
-          dailyLimit: 1500,
+          indiaDailyReset: '12:30 PM IST (DST) / 1:30 PM IST (standard)',
+          models: {
+            'gemini-3.1-flash': '1,500 RPD, 10 RPM (FREE in India)',
+            'gemini-3.1-flash-lite': '1,000 RPD, 15 RPM (FREE in India)',
+            'gemini-2.0-flash': 'limit: 0 (NOT free in India)',
+          },
           billingRequired: false,
           getKeyUrl: 'https://aistudio.google.com/app/apikey',
+          keyFormatNote:
+            'AIzaSy... keys work with ALL models. AQ.... keys only work with older 2.0 models.',
         },
         apiTest: apiTestResult,
         recommendation,
