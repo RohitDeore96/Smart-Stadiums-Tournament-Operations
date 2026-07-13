@@ -67,9 +67,9 @@ function isValidAiStudioKey(key: string): boolean {
 }
 
 interface GeminiResponseBody {
-  candidates?: Array<{
-    content?: { parts?: Array<{ text?: string }> };
-  }>;
+  candidates?: {
+    content?: { parts?: { text?: string }[] };
+  }[];
   usageMetadata?: {
     promptTokenCount?: number;
     candidatesTokenCount?: number;
