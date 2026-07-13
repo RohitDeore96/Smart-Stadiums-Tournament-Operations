@@ -45,6 +45,16 @@ export const ChatMessageSchema = z.object({
   locale: z.enum(LOCALES).default('en'),
   stadiumId: z.string().min(3).max(64).optional(),
   matchId: z.string().min(3).max(64).optional(),
+  /** Previous conversation turns for multi-turn context (max 10, last 5 used). */
+  history: z
+    .array(
+      z.object({
+        role: z.enum(['user', 'model']),
+        text: z.string().max(2000),
+      }),
+    )
+    .max(10)
+    .optional(),
 });
 
 export type ChatMessageInput = z.infer<typeof ChatMessageSchema>;

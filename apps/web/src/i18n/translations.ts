@@ -80,7 +80,13 @@ export type TranslationKey =
   | 'announcements.publish'
   | 'announcements.published'
   | 'announcements.empty'
-  | 'announcements.success';
+  | 'announcements.success'
+  | 'announcements.placeholder'
+  | 'announcements.active'
+  | 'announcements.inactive'
+  | 'announcements.activate'
+  | 'announcements.deactivate'
+  | 'announcements.delete';
 
 type Translations = Record<TranslationKey, string>;
 
@@ -159,6 +165,12 @@ const en: Translations = {
   'announcements.published': 'Published Announcements',
   'announcements.empty': 'No announcements published yet.',
   'announcements.success': 'Announcement published successfully.',
+  'announcements.placeholder': 'e.g. Gate A is now open for entry',
+  'announcements.active': 'Active',
+  'announcements.inactive': 'Inactive',
+  'announcements.activate': 'Activate',
+  'announcements.deactivate': 'Deactivate',
+  'announcements.delete': 'Delete',
 };
 
 const es: Translations = {

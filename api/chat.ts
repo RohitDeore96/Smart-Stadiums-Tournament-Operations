@@ -38,6 +38,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     return;
   }
 
+  // CSRF protection: verify Origin header matches expected origins
+  const origin = req.headers.origin;
+  const allowedOrigins = ['smart-stadiums-tournament-operation-nine.vercel.app'];
+  if (origin) {
+    try {
+      const url = new URL(origin);
+      if (!allowedOrigins.includes(url.hostname) && url.hostname !== 'localhost') {
+        res.status(403).json({
+          error: {
+            code: 'FORBIDDEN',
+            message: 'Cross-origin requests are not allowed.',
+          },
+        });
+        return;
+      }
+    } catch {
+      // Invalid origin header — reject
+      res.status(403).json({
+        error: { code: 'FORBIDDEN', message: 'Invalid origin.' },
+      });
+      return;
+    }
+  }
+
   // Rate limit check (30 requests per minute per IP)
   const clientIp =
     (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ??
@@ -148,6 +172,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
         scope: 'fan_assistant',
         stadiumName: null,
         matchContext: null,
+        history: body.history ?? undefined,
       })) {
         if (chunk.chunk) {
           geminiSucceeded = true;

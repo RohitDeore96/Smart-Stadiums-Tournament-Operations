@@ -62,9 +62,12 @@ jobs:
         run: pnpm test
         env:
           NODE_ENV: test
-          # Tests use mocked Gemini/Firebase — no real keys needed
           GEMINI_API_KEY: test-key-mock-do-not-use
           FIREBASE_PROJECT_ID: stadiumops-test
+
+      - name: Security audit (dependencies)
+        run: pnpm audit --prod --audit-level=high
+        continue-on-error: true
 
       - name: Build all workspaces
         run: pnpm build

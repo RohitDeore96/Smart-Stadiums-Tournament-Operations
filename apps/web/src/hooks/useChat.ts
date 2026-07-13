@@ -98,11 +98,21 @@ export function useChat(options: UseChatOptions): UseChatReturn {
       abortControllerRef.current = controller;
 
       try {
+        // Build conversation history for multi-turn context (last 5 turns)
+        const history = messages
+          .filter((m) => m.content.length > 0)
+          .slice(-5)
+          .map((m) => ({
+            role: m.role === 'user' ? ('user' as const) : ('model' as const),
+            text: m.content,
+          }));
+
         await streamChat(
           {
             message: text,
             locale: options.locale,
             stadiumId: options.stadiumId,
+            history,
           },
           (event: ChatStreamEvent) => {
             switch (event.type) {

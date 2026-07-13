@@ -90,7 +90,7 @@ export const AnnouncementsPage: FC = () => {
         </div>
       )}
 
-      <section className="incident-form-section" aria-label="Publish announcement">
+      <section className="incident-form-section" aria-label={t('announcements.publish')}>
         <form className="incident-form" onSubmit={handleSubmit}>
           <div className="form-field">
             <label htmlFor="ann-text" className="form-label">
@@ -106,8 +106,8 @@ export const AnnouncementsPage: FC = () => {
               maxLength={200}
               rows={3}
               required
-              placeholder="e.g. Gate A is now open for entry"
-              aria-label="Announcement text"
+              placeholder={t('announcements.placeholder')}
+              aria-label={t('announcements.text')}
             />
           </div>
 
@@ -137,7 +137,7 @@ export const AnnouncementsPage: FC = () => {
         </form>
       </section>
 
-      <section aria-label="Published announcements">
+      <section aria-label={t('announcements.published')}>
         <h3 className="section-title">
           {t('announcements.published')} ({String(announcements.length)})
         </h3>
@@ -166,7 +166,7 @@ export const AnnouncementsPage: FC = () => {
                     <span
                       className={`badge badge--status-${ann.active ? 'in_progress' : 'closed'}`}
                     >
-                      {ann.active ? 'Active' : 'Inactive'}
+                      {ann.active ? t('announcements.active') : t('announcements.inactive')}
                     </span>
                   </div>
                 </header>
@@ -178,7 +178,7 @@ export const AnnouncementsPage: FC = () => {
                       toggleActive(ann.id);
                     }}
                   >
-                    {ann.active ? 'Deactivate' : 'Activate'}
+                    {ann.active ? t('announcements.deactivate') : t('announcements.activate')}
                   </button>
                   <button
                     type="button"
@@ -187,7 +187,7 @@ export const AnnouncementsPage: FC = () => {
                       handleDelete(ann.id);
                     }}
                   >
-                    Delete
+                    {t('announcements.delete')}
                   </button>
                 </footer>
               </article>

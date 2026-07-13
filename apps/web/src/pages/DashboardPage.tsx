@@ -4,7 +4,7 @@
  *   interactive stadium map with crowd heatmap, crowd zone cards, recent incidents.
  */
 
-import { type FC, useState } from 'react';
+import { type FC, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useI18n } from '../context/I18nContext.js';
 import { useCrowdData } from '../hooks/useCrowdData.js';
@@ -25,7 +25,11 @@ export const DashboardPage: FC = () => {
   const stadium = getCurrentStadium();
   const [highlightedZone, setHighlightedZone] = useState<string | null>(null);
 
-  const recentIncidents = incidents.slice(0, 3);
+  const recentIncidents = useMemo(() => incidents.slice(0, 3), [incidents]);
+  const sortedReadings = useMemo(
+    () => [...readings].sort((a, b) => b.densityRatio - a.densityRatio),
+    [readings],
+  );
 
   // Next match (simulated — 4 hours from now)
   const nextKickoff = new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString();
@@ -79,21 +83,19 @@ export const DashboardPage: FC = () => {
           </p>
         ) : (
           <div className="zones-grid">
-            {readings
-              .sort((a, b) => b.densityRatio - a.densityRatio)
-              .map((reading) => {
-                const zone = stadium.zones.find((z) => z.id === reading.zoneId);
-                if (!zone) return null;
-                return (
-                  <CrowdZoneCard
-                    key={reading.zoneId}
-                    reading={reading}
-                    zoneName={zone.name}
-                    zoneCapacity={zone.capacity}
-                    history={history[reading.zoneId]}
-                  />
-                );
-              })}
+            {sortedReadings.map((reading) => {
+              const zone = stadium.zones.find((z) => z.id === reading.zoneId);
+              if (!zone) return null;
+              return (
+                <CrowdZoneCard
+                  key={reading.zoneId}
+                  reading={reading}
+                  zoneName={zone.name}
+                  zoneCapacity={zone.capacity}
+                  history={history[reading.zoneId]}
+                />
+              );
+            })}
           </div>
         )}
       </section>

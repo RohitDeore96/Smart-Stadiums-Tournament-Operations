@@ -60,9 +60,6 @@ stadiumops-ai/
 │   │   │   ├── context/          I18nContext (9 languages)
 │   │   │   └── i18n/             translations.ts
 │   │   └── tests/                Vitest + Testing Library
-│   └── api/                      Vercel serverless (DEPLOYED)
-│       ├── src/                  Full route set: chat, matches, stadiums, incidents, announcements
-│       ├── tests/                Unit + integration tests
 
 ├── packages/
 │   └── shared/                   DRY keystone — Zod schemas + TS types

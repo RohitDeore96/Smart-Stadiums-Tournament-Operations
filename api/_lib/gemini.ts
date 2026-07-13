@@ -29,6 +29,8 @@ export interface GeminiRequest {
   scope: SystemPromptContext['scope'];
   stadiumName?: string | null;
   matchContext?: string | null;
+  /** Previous conversation turns for multi-turn context (last N messages). */
+  history?: { role: 'user' | 'model'; text: string }[] | undefined;
 }
 
 export interface GeminiReply {
@@ -90,6 +92,7 @@ async function callGeminiModel(
   model: string,
   systemPrompt: string,
   userMessage: string,
+  history?: { role: 'user' | 'model'; text: string }[],
 ): Promise<{ text: string; tokenUsage: TokenUsage }> {
   const apiKey = getApiKey();
 
@@ -97,10 +100,30 @@ async function callGeminiModel(
     throw new GeminiModelError(400, 'Invalid key format. Use AIzaSy or AQ. prefix', model);
   }
 
+  // Build contents array with conversation history for multi-turn context
+  const contents: { role: string; parts: { text: string }[] }[] = [];
+
+  // Add last 5 conversation turns as context (capped to fit token budget)
+  if (history && history.length > 0) {
+    const recentHistory = history.slice(-5);
+    for (const turn of recentHistory) {
+      contents.push({
+        role: turn.role,
+        parts: [{ text: turn.text }],
+      });
+    }
+  }
+
+  // Add current message
+  contents.push({
+    role: 'user',
+    parts: [{ text: userMessage }],
+  });
+
   const endpoint = `${API_BASE}/${model}:generateContent`;
   const requestBody = {
     system_instruction: { parts: [{ text: systemPrompt }] },
-    contents: [{ parts: [{ text: userMessage }] }],
+    contents,
     generationConfig: { temperature: 0.3, topP: 0.9, maxOutputTokens: 500 },
     safetySettings: [
       { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
@@ -280,13 +303,14 @@ async function* callGeminiModelStream(
 async function callGeminiREST(
   systemPrompt: string,
   userMessage: string,
+  history?: { role: 'user' | 'model'; text: string }[],
 ): Promise<{ text: string; tokenUsage: TokenUsage }> {
   const errors: string[] = [];
 
   for (const model of MODEL_NAMES) {
     try {
       console.log(`[gemini] Trying model: ${model}`);
-      const result = await callGeminiModel(model, systemPrompt, userMessage);
+      const result = await callGeminiModel(model, systemPrompt, userMessage, history);
       console.log(
         `[gemini] Success with ${model}, tokens: ${String(result.tokenUsage.totalTokens)}`,
       );
@@ -352,7 +376,7 @@ export async function generateReply(req: GeminiRequest): Promise<GeminiReply> {
   const cached = cache.get(cacheKey);
   if (cached) return { text: cached.text, tokenUsage: cached.tokenUsage, cached: true };
 
-  const { text, tokenUsage } = await callGeminiREST(systemPrompt, wrappedUserMessage);
+  const { text, tokenUsage } = await callGeminiREST(systemPrompt, wrappedUserMessage, req.history);
   cache.set(cacheKey, { text, tokenUsage });
   return { text, tokenUsage, cached: false };
 }
@@ -419,7 +443,7 @@ export async function* streamReply(req: GeminiRequest): AsyncGenerator<{
 
   // All streaming attempts failed — fall back to non-streaming
   console.log('[gemini] All streaming failed, falling back to non-streaming');
-  const { text, tokenUsage } = await callGeminiREST(systemPrompt, wrappedUserMessage);
+  const { text, tokenUsage } = await callGeminiREST(systemPrompt, wrappedUserMessage, req.history);
   cache.set(cacheKey, { text, tokenUsage });
 
   const words = text.split(' ');

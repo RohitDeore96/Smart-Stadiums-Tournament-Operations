@@ -12,6 +12,8 @@ export interface ChatRequest {
   sessionId?: string | undefined;
   stadiumId?: string | undefined;
   matchId?: string | undefined;
+  /** Previous conversation turns for multi-turn context. */
+  history?: { role: 'user' | 'model'; text: string }[];
 }
 
 /**

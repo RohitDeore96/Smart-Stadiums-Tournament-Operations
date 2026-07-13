@@ -94,15 +94,6 @@ module.exports = tseslint.config(
     },
   },
 
-  // -------- Route files: preHandler type doesn't play nice with
-  //         no-misused-promises. Disable it for route definitions. --------
-  {
-    files: ['**/src/routes/**/*.ts'],
-    rules: {
-      '@typescript-eslint/no-misused-promises': 'off',
-    },
-  },
-
   // -------- Vercel serverless functions: console.log is the standard
   //         logging mechanism (console.log in serverless for size) --------
   {
