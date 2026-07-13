@@ -37,6 +37,11 @@ vi.mock('./_lib/intent.js', () => ({
   classifyIntent: () => ({ intent: 'wayfinding', confidence: 0.85 }),
 }));
 
+// Mock the rate limiter to always allow in tests
+vi.mock('./_lib/rateLimit.js', () => ({
+  checkRateLimit: () => ({ allowed: true, remaining: 29, resetAt: Date.now() + 60000 }),
+}));
+
 // Import AFTER mocks are set up
 import chatModule from './chat.js';
 const handler = chatModule;
@@ -71,6 +76,9 @@ function createMockRes(): VercelResponse & {
       this.body = data;
       this.ended = true;
       return this;
+    },
+    setHeader(key: string, value: string) {
+      this.headers[key] = value;
     },
   };
   return res as VercelResponse & typeof res;
