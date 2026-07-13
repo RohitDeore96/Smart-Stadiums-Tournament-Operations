@@ -22,7 +22,7 @@ export default async function handler(_req: VercelRequest, res: VercelResponse):
   const keyPrefix = apiKey ? `${apiKey.slice(0, 6)}...` : 'none';
 
   const isLegacyFormat = Boolean(apiKey && apiKey.startsWith('AIzaSy') && apiKey.length >= 35);
-  const isNewerFormat = Boolean(apiKey && apiKey.startsWith('AQ.'));
+  const isNewerFormat = Boolean(apiKey?.startsWith('AQ.'));
   const isValidFormat = isLegacyFormat || isNewerFormat;
 
   let keyType = 'Unknown';
@@ -45,13 +45,13 @@ export default async function handler(_req: VercelRequest, res: VercelResponse):
   }
 
   // Test each model
-  const modelResults: Array<{
+  const modelResults: {
     model: string;
     status: 'success' | 'failed';
     httpStatus?: number;
     error?: string;
     responsePreview?: string;
-  }> = [];
+  }[] = [];
 
   let workingModel: string | null = null;
 
@@ -71,7 +71,7 @@ export default async function handler(_req: VercelRequest, res: VercelResponse):
 
         if (testResponse.ok) {
           const data = (await testResponse.json()) as {
-            candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+            candidates?: { content?: { parts?: { text?: string }[] } }[];
           };
           const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text ?? 'empty';
           modelResults.push({
