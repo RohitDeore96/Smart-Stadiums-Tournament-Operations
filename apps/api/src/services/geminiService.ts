@@ -53,7 +53,7 @@ export interface GeminiReply {
   cached: boolean;
 }
 
-const MODEL_NAME = 'gemini-2.0-flash';
+const MODEL_NAME = 'gemini-flash-latest';
 
 /**
  * Generates a complete reply (non-streaming). Checks cache first.

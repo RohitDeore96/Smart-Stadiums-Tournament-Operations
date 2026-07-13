@@ -49,7 +49,7 @@ export interface GeminiReply {
   cached: boolean;
 }
 
-const MODEL_NAME = 'gemini-2.0-flash';
+const MODEL_NAME = 'gemini-flash-latest';
 
 function buildKey(...parts: string[]): string {
   return createHash('sha256').update(parts.join('|')).digest('hex');
