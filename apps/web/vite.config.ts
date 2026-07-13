@@ -26,12 +26,12 @@ export default defineConfig({
     target: 'es2022',
     outDir: 'dist',
     sourcemap: true,
+    chunkSizeWarningLimit: 600,
     rollupOptions: {
       output: {
-        // Split react vendor for better caching.
-        // Firebase chunk will be added in Phase 3 when firebase is actually imported.
         manualChunks: {
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'firebase-vendor': ['firebase/app', 'firebase/firestore'],
         },
       },
     },
