@@ -330,11 +330,11 @@ function getFallbackReply(intent: string, locale: string): string {
 
   const intentKey = intent in fallbacks ? intent : 'unknown';
   const langKey = isSpanish ? 'es' : isFrench ? 'fr' : isArabic ? 'ar' : 'en';
-  const fallbackEntry = fallbacks[intentKey] ?? fallbacks['unknown'];
+  const fallbackEntry = fallbacks[intentKey] ?? fallbacks.unknown;
   // Fallback to English unknown if any key is missing
   return (
     fallbackEntry?.[langKey] ??
-    fallbacks['unknown']?.en ??
+    fallbacks.unknown?.en ??
     'AI service temporarily unavailable. Please try again.'
   );
 }
