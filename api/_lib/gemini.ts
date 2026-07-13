@@ -37,16 +37,11 @@ export interface GeminiReply {
   cached: boolean;
 }
 
-const MODEL_NAMES = [
-  'gemini-flash-latest',
-  'gemini-2.0-flash',
-  'gemini-2.0-flash-lite',
-  'gemini-1.5-pro',
-  'gemini-1.5-flash',
-];
+// Try these models in order — keep it to 2 for fast response
+const MODEL_NAMES = ['gemini-flash-latest', 'gemini-2.0-flash'];
 const API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
-const MAX_RETRIES = 3;
-const RETRY_DELAY_MS = 1000;
+const MAX_RETRIES = 2;
+const RETRY_DELAY_MS = 500;
 
 function buildKey(...parts: string[]): string {
   return createHash('sha256').update(parts.join('|')).digest('hex');

@@ -11,12 +11,13 @@
   ],
   "functions": {
     "api/chat.ts": {
-      "maxDuration": 30,
-      "memory": 512
+      "maxDuration": 30
     },
     "api/health.ts": {
-      "maxDuration": 10,
-      "memory": 128
+      "maxDuration": 10
+    },
+    "api/diagnostics.ts": {
+      "maxDuration": 15
     }
   },
   "headers": [
