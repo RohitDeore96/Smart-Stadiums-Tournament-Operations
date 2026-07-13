@@ -9,7 +9,7 @@
  *   wait for the LLM to decide what to do.
  */
 
-import type { ChatIntent } from '@stadiumops/shared';
+import type { ChatIntent } from './types.js';
 
 /**
  * Emergency keyword patterns. Matched case-insensitively against the

@@ -12,7 +12,7 @@
  *   to Gemini for general FAQ.
  */
 
-import type { ChatIntent } from '@stadiumops/shared';
+import type { ChatIntent } from './types.js';
 
 interface IntentPattern {
   intent: ChatIntent;

@@ -13,7 +13,7 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { ChatMessageSchema, type ChatStreamEvent } from '@stadiumops/shared';
+import { ChatMessageSchema, type ChatStreamEvent } from './_lib/schema.js';
 import { checkSafety } from './_lib/safety.js';
 import { classifyIntent } from './_lib/intent.js';
 import { streamReply } from './_lib/gemini.js';

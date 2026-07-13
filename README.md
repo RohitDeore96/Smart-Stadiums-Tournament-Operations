@@ -4,11 +4,12 @@
 
 ### GenAI-enabled stadium operations, crowd management & fan experience for FIFA World Cup 2026
 
-[![Phase](https://img.shields.io/badge/phase-1%20architecture-00d4ff?style=flat-square)](docs/ARCHITECTURE.md)
+[![Phase](https://img.shields.io/badge/phase-3%20live-00d4ff?style=flat-square)](https://smart-stadiums-tournament-operation-nine.vercel.app)
 [![Node](https://img.shields.io/badge/node-20.11%2B-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/typescript-5.6%2B-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square)](CONTRIBUTING.md)
+[![Live](https://img.shields.io/badge/live-Vercel-000000?style=flat-square&logo=vercel&logoColor=white)](https://smart-stadiums-tournament-operation-nine.vercel.app)
 
 </div>
 
@@ -16,108 +17,69 @@
 
 ## 📋 What is this?
 
-StadiumOps AI is a production-grade, GenAI-enabled platform that helps stadium operators and fans during the FIFA World Cup 2026. It combines:
+StadiumOps AI is a GenAI-enabled platform that helps **volunteers** and **fans** during the FIFA World Cup 2026. It combines:
 
 - **Real-time multilingual chat assistance** for fans (wayfinding, facilities, translation, emergencies)
-- **Predictive crowd routing** using live zone-density data
-- **Operational intelligence** for staff dashboards (incidents, announcements, crowd hotspots)
+- **Live crowd density dashboard** for volunteers (12 zones, color-coded levels, 5-second updates)
+- **Incident reporting workflow** with Zod validation and Firestore persistence
 
-Built across three phases. Currently in **Phase 1: Architecture & CI/CD design**.
+**Persona focus:** Volunteers + Fans
+**Verticals:** Multilingual Assistance + Crowd Management + Operational Intelligence
+
+## 🚀 Live deployment
+
+- **Frontend + API:** https://smart-stadiums-tournament-operation-nine.vercel.app
+- **API health:** https://smart-stadiums-tournament-operation-nine.vercel.app/api/health
+- **Chat endpoint (SSE):** `POST /api/chat` with `{ "message": "...", "locale": "en" }`
 
 ## ✨ The 5 pillars (enforced in every PR)
 
-| Pillar            | How we enforce it                                                                                                 |
-| ----------------- | ----------------------------------------------------------------------------------------------------------------- |
-| **Code Quality**  | TS `strict: true`, Zod at every API boundary, files ≤ 300 LOC, DRY shared types package                           |
-| **Security**      | Input validation everywhere, prompt-injection defense on GenAI, strict Firestore rules, secrets in Secret Manager |
-| **Efficiency**    | SSE streaming for chat, LRU cache for repeat queries, distroless Docker image (~120 MB), scale-to-zero            |
-| **Testing**       | Vitest unit + Supertest integration, ≥ 80% coverage on services/, axe-core a11y tests in CI                       |
-| **Accessibility** | WCAG 2.1 AA — semantic HTML, ARIA, full keyboard nav, 4.5:1 contrast, `prefers-reduced-motion` respected          |
+| Pillar            | How we enforce it                                                                                   |
+| ----------------- | --------------------------------------------------------------------------------------------------- |
+| **Code Quality**  | TS `strict: true`, Zod at every API boundary, files ≤ 300 LOC, DRY shared types package             |
+| **Security**      | Input validation, 3-layer prompt-injection defense, strict Firestore rules, CSP + security headers  |
+| **Efficiency**    | SSE streaming for chat, LRU cache for repeat queries, code-split chunks, mock-data fallback         |
+| **Testing**       | Vitest unit tests (83 tests) covering safety, intent, prompt, schemas, env, health                  |
+| **Accessibility** | WCAG 2.1 AA — semantic HTML, ARIA, keyboard nav, 9 languages + RTL Arabic, `prefers-reduced-motion` |
 
 ## 🏗️ Monorepo layout
 
 ```
 stadiumops-ai/
-├── .github/
-│   ├── workflows/
-│   │   ├── ci.yml              Lint + typecheck + test + build on every PR
-│   │   └── deploy.yml          Auto-deploy to Cloud Run + Firebase Hosting on push to main
-│   ├── ISSUE_TEMPLATE/         bug_report.md, feature_request.md
-│   ├── PULL_REQUEST_TEMPLATE.md
-│   ├── CODEOWNERS              Mandatory reviewers per area
-│   ├── SECURITY.md             Vulnerability disclosure policy
-│   └── dependabot.yml          Weekly dependency updates
+├── api/                          Vercel serverless functions (DEPLOYED)
+│   ├── _lib/                     gemini.ts, prompt.ts, safety.ts, intent.ts, schema.ts
+│   ├── chat.ts                   POST /api/chat (SSE streaming)
+│   └── health.ts                 GET /api/health
 ├── apps/
-│   ├── api/                    Fastify + TypeScript backend → Cloud Run
+│   ├── web/                      Vite + React 18 + TypeScript (DEPLOYED to Vercel)
 │   │   ├── src/
-│   │   │   ├── config/         env.ts (Zod-validated)
-│   │   │   ├── controllers/    (Phase 2)
-│   │   │   ├── middleware/     (Phase 2)
-│   │   │   ├── routes/         (Phase 2)
-│   │   │   ├── services/       (Phase 2)
-│   │   │   ├── utils/          logger.ts, errors.ts
-│   │   │   ├── app.ts          Fastify factory
-│   │   │   └── index.ts        Cloud Run entry point
-│   │   ├── tests/              Vitest unit + integration
-│   │   ├── Dockerfile          3-stage distroless build
-│   │   └── package.json
-│   └── web/                    Vite + React + TypeScript frontend → Firebase Hosting
-│       ├── src/
-│       │   ├── components/     (Phase 3)
-│       │   ├── pages/          (Phase 3)
-│       │   ├── hooks/          (Phase 3)
-│       │   ├── services/       (Phase 3)
-│       │   ├── context/        (Phase 3)
-│       │   ├── i18n/           (Phase 3)
-│       │   ├── styles/         global.css (a11y-first)
-│       │   ├── App.tsx         Phase 1 placeholder
-│       │   └── main.tsx
-│       ├── tests/              Vitest + Testing Library + axe
-│       ├── public/             favicon.svg
-│       ├── index.html
-│       ├── vite.config.ts
-│       ├── firebase.json
-│       └── package.json
+│   │   │   ├── components/       9 accessible components
+│   │   │   ├── pages/            Dashboard, Chat, Incidents
+│   │   │   ├── hooks/            useChat, useCrowdData, useIncidents
+│   │   │   ├── services/         firebase, crowd, incident, chat, mockData
+│   │   │   ├── context/          I18nContext (9 languages)
+│   │   │   └── i18n/             translations.ts
+│   │   └── tests/                Vitest + Testing Library
+│   └── api/                      Fastify backend (DESIGNED for Cloud Run, not deployed)
+│       ├── src/                  Full route set: chat, matches, stadiums, incidents, announcements
+│       ├── tests/                Unit + integration tests
+│       └── Dockerfile            3-stage distroless build
 ├── packages/
-│   └── shared/                 THE DRY KEYSTONE — types + Zod schemas used by both apps
-│       └── src/
-│           ├── types/          api.ts, chat.ts, match.ts, stadium.ts, incident.ts
-│           └── schemas/        chat.ts, incident.ts (with sanitizeUserText)
+│   └── shared/                   DRY keystone — Zod schemas + TS types
 ├── infrastructure/
-│   └── firebase-rules/
-│       ├── firestore.rules     Strict rules — auth required everywhere
-│       └── firestore.indexes.json
-├── docs/
-│   ├── ARCHITECTURE.md         Topology, request lifecycle, security boundaries
-│   ├── DATA_MODELS.md          Firestore schema, sizing estimates, indexes
-│   └── API_CONTRACTS.md        REST + SSE contracts, rate limits, error envelopes
-├── scripts/
-│   ├── dev-up.sh               Bootstrap fresh checkout
-│   ├── health-check.sh         Smoke test for local services
-│   └── seed-stadiums.ts        Seed 16 FIFA 2026 host stadiums
-├── .editorconfig
-├── .env.example
-├── .gitignore
-├── .nvmrc                      Node 20.11
-├── .prettierrc.json
-├── .prettierignore
-├── CODE_OF_CONDUCT.md
-├── CONTRIBUTING.md
-├── LICENSE                     MIT
-├── Makefile                    Common commands (run `make help`)
-├── README.md                   This file
-├── eslint.config.cjs           Flat config, strict TS rules
-├── package.json                Root workspace
-└── pnpm-workspace.yaml         pnpm workspaces
+│   └── firebase-rules/           Strict Firestore rules (public demo)
+├── docs/                         ARCHITECTURE, DATA_MODELS, API_CONTRACTS
+├── .github/workflows/            ci.yml + deploy.yml (Vercel)
+├── vercel.json                   Routing, headers (CSP, HSTS), function config
+└── package.json                  pnpm workspace root
 ```
 
 ## 🚀 Quick start
 
 ### Prerequisites
 
-- **Node.js 20.11+** — install via [nvm](https://github.com/nvm-sh/nvm): `nvm install 20 && nvm use 20`
-- **pnpm 9** — install: `npm install -g pnpm@9`
-- **(Optional for deploy)** `gcloud` CLI, `firebase` CLI, Docker
+- **Node.js 20.11+** — install via [nvm](https://github.com/nvm-sh/nvm)
+- **pnpm 9** — `npm install -g pnpm@9`
 
 ### One-command bootstrap
 
@@ -127,95 +89,71 @@ cd Smart-Stadiums-Tournament-Operations
 ./scripts/dev-up.sh
 ```
 
-This script verifies prerequisites, installs dependencies, and copies `.env.example` → `.env`.
-
 ### Run the dev servers
 
 ```bash
-# Terminal 1 — backend
-pnpm dev:api
-# → Fastify on http://localhost:8080
-
-# Terminal 2 — frontend
-pnpm dev:web
-# → Vite on http://localhost:5173
-
-# Verify both are healthy
-make -C /path/to/repo help    # see all targets
-./scripts/health-check.sh
+pnpm dev:web    # Vite on :5173
+pnpm dev:api    # Vercel dev on :3000
 ```
 
-Open **http://localhost:5173** — you should see the StadiumOps AI landing page with a live backend health check.
+## 🔑 Environment variables
 
-## ☁️ Cloud setup (beginner-friendly, trial-billing safe)
+### Vercel (production)
 
-See **[Beginner's Cloud Setup Guide](docs/ARCHITECTURE.md#6-trial-billing-cost-controls)** in the Architecture doc. Highlights:
+| Name                  | Purpose                                   |
+| --------------------- | ----------------------------------------- |
+| `GEMINI_API_KEY`      | Google Gemini API key (required for chat) |
+| `GEMINI_CACHE_TTL_MS` | Cache TTL in ms (default 300000 = 5 min)  |
 
-- ✅ Cloud Run with `min-instances=0` → scales to zero when idle (no surprise bills)
-- ✅ Firebase Spark plan covers all dev usage (50k Firestore reads/day free)
-- ✅ Gemini API free tier (15 RPM, 1500/day) sufficient for dev
-- ✅ Trial $300 credit lasts 90 days — plenty for development
+### Frontend (`.env.local`)
 
-## 🔑 Required GitHub Secrets (for CI/CD)
+| Name                                | Purpose                                                       |
+| ----------------------------------- | ------------------------------------------------------------- |
+| `VITE_FIREBASE_API_KEY`             | Firebase web config (optional — app uses mock data if absent) |
+| `VITE_FIREBASE_AUTH_DOMAIN`         | Firebase auth domain                                          |
+| `VITE_FIREBASE_PROJECT_ID`          | Firebase project ID                                           |
+| `VITE_FIREBASE_STORAGE_BUCKET`      | Firebase storage bucket                                       |
+| `VITE_FIREBASE_MESSAGING_SENDER_ID` | Firebase messaging sender ID                                  |
+| `VITE_FIREBASE_APP_ID`              | Firebase app ID                                               |
 
-Set these in your repo: **Settings → Secrets and variables → Actions → New repository secret**
-
-| Secret name                         | Source                                                 |
-| ----------------------------------- | ------------------------------------------------------ |
-| `GCP_PROJECT_ID`                    | Your GCP project ID (e.g. `stadiumops-ai-dev`)         |
-| `GCP_SA_KEY`                        | JSON content of `github-deployer` service account key  |
-| `FIREBASE_TOKEN`                    | From `firebase login:ci`                               |
-| `GEMINI_API_KEY`                    | From https://aistudio.google.com/app/apikey (dev only) |
-| `VITE_FIREBASE_API_KEY`             | Firebase web app config                                |
-| `VITE_FIREBASE_AUTH_DOMAIN`         | `stadiumops-ai-dev.firebaseapp.com`                    |
-| `VITE_FIREBASE_STORAGE_BUCKET`      | `stadiumops-ai-dev.appspot.com`                        |
-| `VITE_FIREBASE_MESSAGING_SENDER_ID` | From Firebase console                                  |
-| `VITE_FIREBASE_APP_ID`              | From Firebase console                                  |
+If Firebase env vars are not set, the app automatically falls back to **mock data** (realistic FIFA 2026 MetLife Stadium data with 5-second polling).
 
 ## 📦 Available commands
 
-Run these from the repo root:
+| Command                     | What it does                                 |
+| --------------------------- | -------------------------------------------- |
+| `pnpm install`              | Install all workspace dependencies           |
+| `pnpm dev:web`              | Start frontend dev server (Vite on :5173)    |
+| `pnpm dev:api`              | Start Vercel dev server (:3000)              |
+| `pnpm build`                | Build all workspaces                         |
+| `pnpm test`                 | Run all unit + integration tests (83 tests)  |
+| `pnpm lint`                 | ESLint across all workspaces (zero warnings) |
+| `pnpm typecheck`            | `tsc --noEmit` across all workspaces         |
+| `pnpm format`               | Prettier write                               |
+| `./scripts/health-check.sh` | Smoke test API + Web                         |
 
-| Command                     | What it does                                         |
-| --------------------------- | ---------------------------------------------------- |
-| `pnpm install`              | Install all workspace dependencies                   |
-| `pnpm dev:api`              | Start backend dev server (Fastify on :8080)          |
-| `pnpm dev:web`              | Start frontend dev server (Vite on :5173)            |
-| `pnpm build`                | Build all workspaces                                 |
-| `pnpm test`                 | Run all unit + integration tests                     |
-| `pnpm test:coverage`        | Run tests with coverage report                       |
-| `pnpm lint`                 | ESLint across all workspaces (zero warnings allowed) |
-| `pnpm typecheck`            | `tsc --noEmit` across all workspaces                 |
-| `pnpm format`               | Prettier write                                       |
-| `pnpm format:check`         | Prettier check (CI uses this)                        |
-| `./scripts/dev-up.sh`       | Bootstrap a fresh checkout                           |
-| `./scripts/health-check.sh` | Smoke test API + Web                                 |
-| `make help`                 | Show all Makefile targets                            |
+## 🧪 Phases
 
-## 🧪 Phase roadmap
-
-| Phase | Status   | Deliverables                                                                                       |
-| ----- | -------- | -------------------------------------------------------------------------------------------------- |
-| **1** | ✅ Done  | Monorepo, shared types/schemas, Firestore models, API contracts, Dockerfile, CI/CD, security rules |
-| **2** | 🔜 Next  | Cloud Run backend, Gemini service w/ prompt-injection defense, full Vitest + Supertest test suite  |
-| **3** | ⏳ Later | Accessible React frontend, Firebase Auth, strict Firestore rules, axe-core a11y tests              |
+| Phase | Status  | Deliverables                                                                   |
+| ----- | ------- | ------------------------------------------------------------------------------ |
+| **1** | ✅ Done | Architecture, data models, API contracts, Dockerfile, CI/CD, security rules    |
+| **2** | ✅ Done | Cloud Run backend, Gemini service w/ prompt-injection defense, full test suite |
+| **3** | ✅ Done | Accessible React frontend, Firebase client SDK, strict Firestore rules, i18n   |
 
 ## 🛡️ Security
 
-See **[SECURITY.md](.github/SECURITY.md)** for the full policy. Highlights:
+- **3-layer prompt injection defense**: system prompt instructions + XML delimiters + `sanitizeUserText`
+- **29 emergency keyword patterns** — fires BEFORE Gemini, returns canned safety reply
+- **Zod validation** on every API boundary
+- **CSP + HSTS + X-Frame-Options + X-Content-Type-Options** headers on all routes
+- **Strict Firestore rules** — field validation, server-set fields forced, default deny
+- **Secret via Vercel env vars** (never committed)
 
-- 🔒 All secrets via Google Secret Manager (never env vars in prod)
-- 🔒 Strict Firestore rules — every collection requires `request.auth != null`
-- 🔒 Prompt-injection defense on every GenAI call (input sanitization + system prompt isolation)
-- 🔒 Distroless runtime image, non-root uid 65534, no shell
-- 🔒 Per-user rate limiting on every endpoint
-- 🔒 Defense-in-depth `.gitignore` blocks `*-key.json` and `.env*` from ever being committed
-
-To report a vulnerability, **do not open a public issue** — see SECURITY.md for the disclosure process.
+See **[SECURITY.md](.github/SECURITY.md)** for the full policy.
 
 ## 🤝 Contributing
 
-Read **[CONTRIBUTING.md](CONTRIBUTING.md)** before opening a PR. The 5-pillar checklist is non-negotiable.
+Read **[CONTRIBUTING.md](CONTRIBUTING.md)** before opening a PR.
 
 ## 📄 License
 
@@ -223,9 +161,9 @@ MIT — see [LICENSE](LICENSE).
 
 ## 🙏 Acknowledgements
 
-- Built with [Fastify](https://fastify.dev), [React](https://react.dev), [Vite](https://vitejs.dev), [pnpm](https://pnpm.io)
+- Built with [Vite](https://vitejs.dev), [React](https://react.dev), [Vercel](https://vercel.com)
 - AI by [Google Gemini](https://ai.google.dev)
-- Hosting by [Firebase](https://firebase.google.com) + [Google Cloud Run](https://cloud.google.com/run)
+- Database by [Firebase Firestore](https://firebase.google.com)
 
 <div align="center">
 

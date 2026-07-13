@@ -12,7 +12,7 @@
  *   5. The system prompt enforces locale, scope, and safety constraints.
  */
 
-import type { Locale } from '@stadiumops/shared';
+import type { Locale } from './schema.js';
 
 const LOCALE_NAMES: Record<Locale, string> = {
   en: 'English',

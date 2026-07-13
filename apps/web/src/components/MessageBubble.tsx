@@ -16,11 +16,16 @@ export const MessageBubble: FC<MessageBubbleProps> = ({ message }) => {
   const { t } = useI18n();
   const isUser = message.role === 'user';
   const isEmergency = Boolean(message.emergencyEscalated);
+  const timeStr = new Date(message.createdAt).toLocaleTimeString();
+  const roleLabel = isUser ? 'Your message' : 'Assistant reply';
+  const emergencyLabel = isEmergency ? ', emergency escalated' : '';
+  const intentLabel = message.intent ? `, intent: ${message.intent}` : '';
 
   return (
     <article
       className={`message message--${message.role} ${isEmergency ? 'message--emergency' : ''}`}
-      aria-label={isUser ? 'Your message' : 'Assistant reply'}
+      aria-label={`${roleLabel} at ${timeStr}${emergencyLabel}${intentLabel}`}
+      role="article"
     >
       <div className="message-avatar" aria-hidden="true">
         {isUser ? '🧑' : '🤖'}
