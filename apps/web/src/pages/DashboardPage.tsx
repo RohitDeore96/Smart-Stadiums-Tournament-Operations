@@ -5,6 +5,7 @@
  */
 
 import { type FC, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useI18n } from '../context/I18nContext.js';
 import { useCrowdData } from '../hooks/useCrowdData.js';
 import { useIncidents } from '../hooks/useIncidents.js';
@@ -102,9 +103,9 @@ export const DashboardPage: FC = () => {
           <h3 id="recent-incidents-heading" className="section-title">
             {t('dashboard.recentIncidents')}
           </h3>
-          <a href="#/incidents" className="view-all-link">
+          <Link to="/incidents" className="view-all-link">
             {t('dashboard.viewAll')}
-          </a>
+          </Link>
         </div>
         {incidentsLoading ? (
           <p className="loading-state" aria-live="polite">

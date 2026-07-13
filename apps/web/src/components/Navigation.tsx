@@ -1,10 +1,12 @@
 /**
  * @file apps/web/src/components/Navigation.tsx
- * @description Primary navigation — Dashboard, Assistant, Incidents.
+ * @description Primary navigation — Dashboard, Assistant, Incidents, Announcements.
+ *   Uses React Router Link for SPA navigation (no page reload).
  *   Accessible: aria-current on active link, keyboard navigable.
  */
 
 import { type FC } from 'react';
+import { Link } from 'react-router-dom';
 import { useI18n } from '../context/I18nContext.js';
 
 interface NavigationProps {
@@ -34,8 +36,8 @@ export const Navigation: FC<NavigationProps> = ({ activePath }) => {
           const isActive = activePath === item.path;
           return (
             <li key={item.path} className="nav-item">
-              <a
-                href={item.path}
+              <Link
+                to={item.path}
                 className={`nav-link ${isActive ? 'nav-link--active' : ''}`}
                 aria-current={isActive ? 'page' : undefined}
               >
@@ -43,7 +45,7 @@ export const Navigation: FC<NavigationProps> = ({ activePath }) => {
                   {item.icon}
                 </span>
                 <span className="nav-label">{t(item.labelKey)}</span>
-              </a>
+              </Link>
             </li>
           );
         })}

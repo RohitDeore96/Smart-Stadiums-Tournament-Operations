@@ -6,6 +6,7 @@
  */
 
 import { type FC } from 'react';
+import { Link } from 'react-router-dom';
 import type { ChatMessage } from '../hooks/useChat.js';
 import { useI18n } from '../context/I18nContext.js';
 import { TranslateButton } from './TranslateButton.js';
@@ -63,13 +64,13 @@ export const MessageBubble: FC<MessageBubbleProps> = ({ message, onSpeak, speaki
           {message.suggestedActions && message.suggestedActions.length > 0 && (
             <div className="message-actions" role="group" aria-label="Suggested actions">
               {message.suggestedActions.map((action, idx) => (
-                <a
+                <Link
                   key={`${action.type}-${String(idx)}`}
-                  href={getActionHref(action.type)}
+                  to={getActionHref(action.type)}
                   className="suggested-action"
                 >
                   {action.label}
-                </a>
+                </Link>
               ))}
             </div>
           )}
@@ -85,15 +86,15 @@ export const MessageBubble: FC<MessageBubbleProps> = ({ message, onSpeak, speaki
 function getActionHref(type: string): string {
   switch (type) {
     case 'file_incident':
-      return '#/incidents';
+      return '/incidents';
     case 'show_route':
     case 'open_map':
-      return '#/';
+      return '/';
     case 'view_crowd':
-      return '#/';
+      return '/';
     case 'translate':
-      return '#/chat';
+      return '/chat';
     default:
-      return '#/';
+      return '/';
   }
 }
