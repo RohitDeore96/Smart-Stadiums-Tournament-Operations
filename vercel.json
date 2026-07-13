@@ -1,11 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
-  "buildCommand": "pnpm install && pnpm --filter @stadiumops/shared build",
+  "buildCommand": "pnpm install && pnpm --filter @stadiumops/shared build && pnpm --filter @stadiumops/web build",
   "outputDirectory": "apps/web/dist",
-  "frameworks": {
-    "apps/web": "vite"
-  },
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
