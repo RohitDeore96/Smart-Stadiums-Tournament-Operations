@@ -2,6 +2,7 @@
  * @file apps/web/src/components/MessageBubble.tsx
  * @description Single chat message bubble — user or assistant.
  *   Renders emergency banner if escalated. Shows suggested actions.
+ *   Supports text-to-speech on assistant messages.
  */
 
 import { type FC } from 'react';
@@ -10,9 +11,11 @@ import { useI18n } from '../context/I18nContext.js';
 
 interface MessageBubbleProps {
   message: ChatMessage;
+  onSpeak?: ((text: string) => void) | undefined;
+  speaking?: boolean;
 }
 
-export const MessageBubble: FC<MessageBubbleProps> = ({ message }) => {
+export const MessageBubble: FC<MessageBubbleProps> = ({ message, onSpeak, speaking }) => {
   const { t } = useI18n();
   const isUser = message.role === 'user';
   const isEmergency = Boolean(message.emergencyEscalated);
@@ -40,21 +43,35 @@ export const MessageBubble: FC<MessageBubbleProps> = ({ message }) => {
         <div className="message-text">
           {message.content || (message.role === 'assistant' ? t('chat.thinking') : '')}
         </div>
-        {message.suggestedActions && message.suggestedActions.length > 0 && (
-          <div className="message-actions" role="group" aria-label="Suggested actions">
-            {message.suggestedActions.map((action, idx) => (
-              <a
-                key={`${action.type}-${String(idx)}`}
-                href={getActionHref(action.type)}
-                className="suggested-action"
-              >
-                {action.label}
-              </a>
-            ))}
-          </div>
-        )}
+        <div className="message-actions-row">
+          {!isUser && onSpeak && message.content && (
+            <button
+              type="button"
+              className="message-action-btn"
+              onClick={() => {
+                onSpeak(message.content);
+              }}
+              aria-label={speaking ? 'Stop speaking' : 'Read aloud'}
+            >
+              {speaking ? '⏹️' : '🔊'}
+            </button>
+          )}
+          {message.suggestedActions && message.suggestedActions.length > 0 && (
+            <div className="message-actions" role="group" aria-label="Suggested actions">
+              {message.suggestedActions.map((action, idx) => (
+                <a
+                  key={`${action.type}-${String(idx)}`}
+                  href={getActionHref(action.type)}
+                  className="suggested-action"
+                >
+                  {action.label}
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
         <time className="message-time" dateTime={new Date(message.createdAt).toISOString()}>
-          {new Date(message.createdAt).toLocaleTimeString()}
+          {timeStr}
         </time>
       </div>
     </article>
@@ -64,15 +81,15 @@ export const MessageBubble: FC<MessageBubbleProps> = ({ message }) => {
 function getActionHref(type: string): string {
   switch (type) {
     case 'file_incident':
-      return '/incidents';
+      return '#/incidents';
     case 'show_route':
     case 'open_map':
-      return '/';
+      return '#/';
     case 'view_crowd':
-      return '/';
+      return '#/';
     case 'translate':
-      return '/chat';
+      return '#/chat';
     default:
-      return '/';
+      return '#/';
   }
 }

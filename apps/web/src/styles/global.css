@@ -1098,3 +1098,329 @@ body {
   right: auto;
   left: 0;
 }
+
+/* ==============================================================
+   Phase 3+ — Interactivity upgrades
+   ============================================================== */
+
+/* ---- Match Ticker ---- */
+.match-ticker {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  background: linear-gradient(135deg, #0d4f1c, #0a3a16);
+  border: 1px solid #1a6b2e;
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-4);
+}
+
+.match-ticker--live {
+  background: linear-gradient(135deg, #4f0d0d, #3a0a0a);
+  border-color: #6b1a1a;
+}
+
+.match-ticker-teams {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.match-team {
+  font-size: var(--font-size-lg);
+}
+
+.match-vs {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.match-score {
+  font-size: var(--font-size-xl);
+  font-weight: 800;
+  color: var(--color-primary);
+  min-width: 50px;
+  text-align: center;
+}
+
+.match-live-badge {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  background-color: var(--color-critical);
+  color: #fff;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #fff;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  50% { opacity: 0.3; }
+}
+
+.match-countdown {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--color-success);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Announcements Ticker ---- */
+.announcements-ticker {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  background-color: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-4);
+  overflow: hidden;
+}
+
+.announcements-label {
+  font-size: var(--font-size-lg);
+  flex-shrink: 0;
+}
+
+.announcements-track {
+  display: flex;
+  gap: var(--space-8);
+  animation: scroll-announcements 40s linear infinite;
+  white-space: nowrap;
+}
+
+.announcements-ticker:hover .announcements-track {
+  animation-play-state: paused;
+}
+
+@keyframes scroll-announcements {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.announcement-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+}
+
+.announcement-item--info {
+  color: var(--color-text-muted);
+}
+
+.announcement-item--warning {
+  color: var(--color-warning);
+  font-weight: 600;
+}
+
+.announcement-item--critical {
+  color: var(--color-critical);
+  font-weight: 700;
+}
+
+/* ---- Stadium Map ---- */
+.stadium-map-section {
+  background-color: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.stadium-map-header {
+  margin-bottom: var(--space-4);
+}
+
+.stadium-map-subtitle {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.stadium-map-container {
+  width: 100%;
+  overflow-x: auto;
+  background-color: #0a0e1a;
+  border-radius: var(--radius-md);
+  padding: var(--space-2);
+}
+
+.stadium-map-svg {
+  width: 100%;
+  max-width: 800px;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+
+.zone-group {
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.zone-group:hover {
+  opacity: 0.85;
+}
+
+.zone-group--highlighted .zone-rect {
+  filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.8));
+}
+
+.zone-group--critical .zone-rect {
+  animation: zone-pulse 1s ease-in-out infinite;
+}
+
+@keyframes zone-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.stadium-map-legend {
+  display: flex;
+  gap: var(--space-4);
+  justify-content: center;
+  margin-top: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.zone-detail-panel {
+  margin-top: var(--space-4);
+  padding: var(--space-4);
+  background-color: var(--color-bg-elevated);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-primary);
+}
+
+.zone-detail-title {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--color-primary);
+  margin-bottom: var(--space-2);
+}
+
+.zone-detail-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+}
+
+.zone-detail-stats dt {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.zone-detail-stats dd {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.zone-detail-empty {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+/* ---- Sparkline in zone card ---- */
+.zone-sparkline {
+  margin-top: var(--space-2);
+  padding: var(--space-2);
+  background-color: var(--color-bg-elevated);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.sparkline-svg {
+  flex-shrink: 0;
+}
+
+.sparkline-label {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-subtle);
+}
+
+.zone-card--expanded {
+  border-color: var(--color-primary);
+  cursor: pointer;
+}
+
+/* ---- Voice button ---- */
+.voice-button {
+  padding: var(--space-3);
+  background-color: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-lg);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.voice-button:hover:not(:disabled) {
+  background-color: var(--color-border);
+}
+
+.voice-button--active {
+  background-color: var(--color-error);
+  border-color: var(--color-error);
+  animation: voice-pulse 1s ease-in-out infinite;
+}
+
+@keyframes voice-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(248, 113, 113, 0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(248, 113, 113, 0); }
+}
+
+/* ---- Message action row ---- */
+.message-actions-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.message-action-btn {
+  padding: var(--space-1) var(--space-2);
+  background-color: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.message-action-btn:hover {
+  background-color: var(--color-border);
+}
+

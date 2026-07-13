@@ -1,9 +1,10 @@
 /**
  * @file apps/web/src/pages/DashboardPage.tsx
- * @description Volunteer dashboard — stats, crowd overview, recent incidents.
+ * @description Volunteer dashboard — match ticker, announcements, stats,
+ *   interactive stadium map with crowd heatmap, crowd zone cards, recent incidents.
  */
 
-import { type FC } from 'react';
+import { type FC, useState } from 'react';
 import { useI18n } from '../context/I18nContext.js';
 import { useCrowdData } from '../hooks/useCrowdData.js';
 import { useIncidents } from '../hooks/useIncidents.js';
@@ -11,17 +12,28 @@ import { getCurrentStadium } from '../services/crowdService.js';
 import { StatsCards } from '../components/StatsCards.js';
 import { CrowdZoneCard } from '../components/CrowdZoneCard.js';
 import { IncidentCard } from '../components/IncidentCard.js';
+import { StadiumMap } from '../components/StadiumMap.js';
+import { MatchTicker } from '../components/MatchTicker.js';
+import { AnnouncementsTicker } from '../components/AnnouncementsTicker.js';
 
 export const DashboardPage: FC = () => {
   const { t } = useI18n();
-  const { readings, isLoading: crowdLoading, lastUpdated } = useCrowdData();
+  const { readings, isLoading: crowdLoading, lastUpdated, history } = useCrowdData();
   const { incidents, isLoading: incidentsLoading } = useIncidents();
   const stadium = getCurrentStadium();
+  const [highlightedZone, setHighlightedZone] = useState<string | null>(null);
 
   const recentIncidents = incidents.slice(0, 3);
 
+  // Next match (simulated — 4 hours from now)
+  const nextKickoff = new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString();
+
   return (
     <>
+      <MatchTicker homeTeam="Mexico" awayTeam="Canada" kickoffTimeUTC={nextKickoff} />
+
+      <AnnouncementsTicker />
+
       <section className="page-header">
         <h2 className="page-title">{t('dashboard.title')}</h2>
         <p className="page-subtitle">{t('dashboard.subtitle')}</p>
@@ -34,9 +46,30 @@ export const DashboardPage: FC = () => {
 
       <StatsCards readings={readings} incidents={incidents} />
 
-      <section className="crowd-section" aria-labelledby="crowd-heading">
-        <h3 id="crowd-heading" className="section-title">
-          {t('dashboard.crowdOverview')}
+      {/* Interactive stadium map with crowd heatmap */}
+      <section className="crowd-section" aria-labelledby="map-heading">
+        <h3 id="map-heading" className="section-title">
+          🗺️ {t('dashboard.crowdOverview')}
+        </h3>
+        {crowdLoading ? (
+          <p className="loading-state" aria-live="polite">
+            {t('common.loading')}
+          </p>
+        ) : (
+          <StadiumMap
+            readings={readings}
+            highlightedZoneId={highlightedZone}
+            onZoneClick={(zoneId) => {
+              setHighlightedZone(zoneId);
+            }}
+          />
+        )}
+      </section>
+
+      {/* Zone cards with sparklines */}
+      <section className="crowd-section" aria-labelledby="zones-heading">
+        <h3 id="zones-heading" className="section-title">
+          📊 {t('dashboard.crowdOverview')}
         </h3>
         {crowdLoading ? (
           <p className="loading-state" aria-live="polite">
@@ -55,6 +88,7 @@ export const DashboardPage: FC = () => {
                     reading={reading}
                     zoneName={zone.name}
                     zoneCapacity={zone.capacity}
+                    history={history[reading.zoneId]}
                   />
                 );
               })}
@@ -67,7 +101,7 @@ export const DashboardPage: FC = () => {
           <h3 id="recent-incidents-heading" className="section-title">
             {t('dashboard.recentIncidents')}
           </h3>
-          <a href="/incidents" className="view-all-link">
+          <a href="#/incidents" className="view-all-link">
             {t('dashboard.viewAll')}
           </a>
         </div>
