@@ -9,7 +9,7 @@
 # ==============================================================
 
 # ---------- Stage 1: build ----------
-FROM node:20-alpine AS builder
+FROM node:26-alpine AS builder
 
 WORKDIR /app
 
@@ -35,7 +35,7 @@ RUN pnpm --filter @stadiumops/shared build \
  && pnpm --filter @stadiumops/api build
 
 # ---------- Stage 2: production deps ----------
-FROM node:20-alpine AS deps
+FROM node:26-alpine AS deps
 
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@9.12.0 --activate
