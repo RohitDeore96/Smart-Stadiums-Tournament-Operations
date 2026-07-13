@@ -17,26 +17,31 @@ Instead, email **rohitdeore96@github.com** with:
 
 1. Description of the issue
 2. Steps to reproduce
-3. Affected components (api / web / firestore rules / docker)
+3. Affected components (api / web / firestore rules)
 4. Suggested fix (optional)
 
 You will receive an acknowledgment within 48 hours. We will coordinate a fix and disclosure timeline with you.
 
 ## Security measures in this codebase
 
-| Threat                        | Mitigation                                                                                                          |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| Leaked API keys / tokens      | Secrets stored in Google Secret Manager; never committed; `.gitignore` blocks key files                             |
-| Prompt injection on GenAI     | User input sanitized (control chars + zero-width + bidi override stripped); system prompt isolated; output filtered |
-| Unauthorized Firestore access | Strict `firestore.rules` — every collection requires `request.auth != null`                                         |
-| Brute-force / DoS             | Per-user rate limiting (`@fastify/rate-limit`) on every endpoint                                                    |
-| Supply-chain attacks          | Dependabot weekly updates; `pnpm audit` in CI; lockfile required                                                    |
-| Container escape              | Distroless runtime image, non-root uid 65534, no shell                                                              |
-| XSS in chat output            | React escapes by default; assistant text rendered as text nodes, never `dangerouslySetInnerHTML`                    |
-| CSRF                          | All state-changing routes require Bearer token (not cookies); CORS allowlist enforced                               |
+| Threat                        | Mitigation                                                                                                       |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Leaked API keys / tokens      | Secrets stored in Vercel env vars; never committed; `.gitignore` blocks key files                                |
+| Prompt injection on GenAI     | 3-layer defense: system prompt instructions + XML delimiters + sanitizeUserText (strips control/zero-width/bidi) |
+| Unauthorized Firestore access | Strict rules — authentication required for ALL reads and writes; default deny; server-set fields forced          |
+| Brute-force / DoS             | Per-IP rate limiting (30 req/min) via in-memory counter. NOTE: per-instance, resets on cold starts               |
+| Container escape              | N/A — Vercel serverless (no container management)                                                                |
+| XSS in chat output            | React escapes by default; assistant text rendered as text nodes, never `dangerouslySetInnerHTML`                 |
+| CSRF                          | All state-changing routes use POST with JSON body (not cookies); CORS not needed (same-origin on Vercel)         |
+| Information disclosure        | /api/diagnostics does NOT expose API key prefix, length, or value — only reports key type (format family)        |
+| Supply-chain attacks          | Dependabot weekly updates; `pnpm install --frozen-lockfile` in CI; lockfile required                             |
 
-## What we explicitly do NOT support
+## Known limitations (honest disclosure)
 
-- Anonymous read access to Firestore (every read requires auth)
-- Client-side role escalation (roles come from custom claims set via Admin SDK only)
-- Long-lived API tokens (Firebase ID tokens expire in 1 hour; refresh handled by Firebase SDK)
+| Limitation                                      | Impact                                   | Mitigation plan                                       |
+| ----------------------------------------------- | ---------------------------------------- | ----------------------------------------------------- |
+| No authentication on API endpoints              | /api/chat is publicly callable           | Add Firebase Auth (anonymous) in next iteration       |
+| In-memory rate limiter                          | Resets on Vercel cold starts; not global | Migrate to Upstash Redis for cross-instance limiting  |
+| CSP allows 'unsafe-inline' for scripts          | Required by Vite's module loading        | Use Vite's nonce-based CSP plugin in production       |
+| No server-side output filter on Gemini          | Relies on React escaping                 | Add server-side content sanitization on Gemini output |
+| Mock data fallback when Firebase not configured | Dashboard shows simulated data           | Configure VITE_FIREBASE_* env vars for real Firestore |

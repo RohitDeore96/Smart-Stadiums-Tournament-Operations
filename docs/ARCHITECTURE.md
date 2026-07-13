@@ -1,95 +1,115 @@
 # StadiumOps AI — Architecture
 
-> Phase 1 architecture document. Covers system topology, data flow, and rationale for each technology choice.
+> This document reflects the ACTUAL deployed architecture (Vercel serverless).
+> Previous versions described a Cloud Run topology that was migrated to Vercel.
 
 ## 1. High-level topology
 
 ```
                 ┌───────────────────────────────────────────────────────┐
-                │                  Fan / Staff device                    │
+                │                  Fan / Volunteer device                │
                 │  Browser (PWA) ─ multilingual, a11y-first React UI    │
                 └───────────────┬───────────────────────────┬───────────┘
                                 │                            │
-                  HTTPS (REST + SSE)              Firebase Auth (OIDC)
+                  HTTPS (REST + SSE)              localStorage (chat memory)
                                 │                            │
                                 ▼                            ▼
                 ┌────────────────────────┐      ┌────────────────────────┐
-                │  Firebase Hosting      │      │  Firebase Auth         │
-                │  (CDN, SSL, SPA)       │      │  (Email/Google)        │
+                │  Vercel Hosting        │      │  Browser localStorage  │
+                │  (CDN, SSL, SPA)       │      │  (chat history, prefs) │
                 └────────────────────────┘      └────────────────────────┘
-                                │                            │
-                                ▼                            ▼
+                                │
+                  /api/* → Vercel serverless functions
+                                │
+                                ▼
                 ┌────────────────────────────────────────────────────────┐
-                │  Cloud Run — stadiumops-api (Fastify, Node 20)         │
-                │  • Zod input validation on every route                 │
-                │  • Firebase Admin token verification                   │
-                │  • Gemini service (cache + stream + injection defense) │
-                │  • Firestore service (paginated reads/writes)          │
-                └─────┬──────────────────┬────────────────────┬──────────┘
-                      │                  │                    │
-                      ▼                  ▼                    ▼
-            ┌─────────────────┐ ┌──────────────────┐ ┌──────────────────┐
-            │ Firestore       │ │ Secret Manager   │ │ Vertex AI /      │
-            │ (NoSQL)         │ │ (Gemini key)     │ │ Gemini API       │
-            └─────────────────┘ └──────────────────┘ └──────────────────┘
+                │  Vercel Serverless Functions (Node.js, TypeScript)     │
+                │  • /api/chat — SSE streaming chat with Gemini          │
+                │  • /api/health — health check + cache stats            │
+                │  • /api/diagnostics — API key + model diagnostics      │
+                │  • Rate limiting (30 req/min per IP, in-memory)        │
+                │  • Zod validation on every boundary                    │
+                │  • 3-layer prompt injection defense                    │
+                │  • Multi-model fallback (5 Gemini variants)            │
+                └─────┬──────────────────────────────────────┬──────────┘
+                      │                                     │
+                      ▼                                     ▼
+            ┌─────────────────┐                   ┌──────────────────┐
+            │ Google Gemini   │                   │ Firebase         │
+            │ REST API        │                   │ Firestore        │
+            │ (AI Studio      │                   │ (optional —      │
+            │  free tier)     │                   │  falls back to   │
+            │                 │                   │  mock data)      │
+            └─────────────────┘                   └──────────────────┘
 ```
 
 ## 2. Component responsibilities
 
-| Layer          | Owner                  | Responsibility                                                              |
-| -------------- | ---------------------- | --------------------------------------------------------------------------- |
-| UI             | `apps/web`             | Render state, capture input, enforce a11y, call API. No business logic.     |
-| API routes     | `apps/api/routes`      | Parse + validate HTTP, auth check, delegate to controller.                  |
-| Controllers    | `apps/api/controllers` | Orchestrate services, shape responses, no direct DB/AI calls.               |
-| Services       | `apps/api/services`    | All business logic: `geminiService`, `firestoreService`, `incidentService`. |
-| Shared types   | `packages/shared`      | Single source of truth for types + Zod schemas, imported by web & api.      |
-| Infrastructure | `infrastructure/`      | Firestore rules, indexes, IaC snippets.                                     |
+| Layer          | Owner             | Responsibility                                                            |
+| -------------- | ----------------- | ------------------------------------------------------------------------- |
+| UI             | `apps/web`        | Render state, capture input, enforce a11y, call API. No business logic.   |
+| API functions  | `api/`            | Parse + validate HTTP, rate limit, safety check, call Gemini, stream SSE. |
+| Shared types   | `packages/shared` | Single source of truth for Zod schemas + TS types.                        |
+| Infrastructure | `infrastructure/` | Firestore rules, indexes.                                                 |
 
-## 3. Why these specific technologies?
+## 3. Technology decisions
 
-| Choice              | Reason                                                                                                       |
-| ------------------- | ------------------------------------------------------------------------------------------------------------ |
-| **Fastify**         | ~2× faster request throughput than Express; built-in schema validation hooks; first-class TS support.        |
-| **Vite + React 18** | Sub-second HMR; tree-shaking; React's Suspense model pairs well with SSE streaming for chat.                 |
-| **pnpm workspaces** | Disk-efficient (one copy of each package version), strict about phantom deps, monorepo-native.               |
-| **Zod**             | Single schema definition consumed at both the Fastify route boundary and the React form — true DRY.          |
-| **Distroless**      | ~120 MB final image, no shell, no package manager — vastly smaller attack surface than Alpine.               |
-| **Secret Manager**  | Audit-logged secret access, automatic versioning, IAM-controlled — far safer than env vars baked into image. |
-| **SSE (not WS)**    | Cloud Run supports HTTP streaming; SSE is one-way (server→client) which is exactly what chat needs.          |
+| Choice                | Reason                                                                                               |
+| --------------------- | ---------------------------------------------------------------------------------------------------- |
+| **Vercel serverless** | Zero-config deployment, free tier, global CDN, automatic HTTPS. No container management needed.      |
+| **Direct REST API**   | No SDK dependency — smaller bundle, better error messages, full control over retry + fallback logic. |
+| **Vite + React 18**   | Sub-second HMR; tree-shaking; React's Suspense model pairs well with SSE streaming for chat.         |
+| **pnpm workspaces**   | Disk-efficient (one copy of each package version), strict about phantom deps, monorepo-native.       |
+| **Zod**               | Single schema definition consumed at both the API boundary and the React form — true DRY.            |
+| **SSE (not WS)**      | Vercel supports HTTP streaming; SSE is one-way (server→client) which is exactly what chat needs.     |
+| **localStorage**      | Multi-turn chat memory without requiring a database. Persists across sessions, no server cost.       |
 
 ## 4. Request lifecycle (chat example)
 
-1. Client sends `POST /api/v1/chat` with Firebase ID token in `Authorization: Bearer`.
-2. `authMiddleware` verifies token via Firebase Admin; attaches `request.user`.
-3. `rateLimitMiddleware` checks user bucket (60 req/min).
-4. `validate(ChatMessageSchema)` parses + sanitizes body; rejects on error.
-5. `chatController.stream()` calls:
-   - `intentService.classify(message)` → returns `ChatIntent` via a cheap Gemini call.
-   - `safetyService.checkEmergency(message)` → if positive, escalate + page responders.
-   - `geminiService.streamReply(systemPrompt, history, message)` → yields token chunks.
-6. Each chunk is written as an SSE event: `event: token\ndata: {…}\n\n`.
-7. On completion, controller emits `metadata` + `done` events and persists the turn to Firestore.
+1. Client sends `POST /api/chat` with message + locale in JSON body.
+2. Rate limiter checks IP bucket (30 req/min).
+3. `ChatMessageSchema.safeParse()` validates + sanitizes body; rejects on error (400).
+4. `checkSafety()` scans for 29 emergency keywords; if positive, return canned safety reply (bypasses Gemini).
+5. `classifyIntent()` runs rule-based classification (6 intents, confidence scoring).
+6. `streamReply()` calls Gemini REST API with 5-model fallback chain.
+7. Response is chunked into 3-word pieces and streamed as SSE `event: token` events.
+8. After streaming completes, `metadata` event (intent, confidence, suggested actions) is sent.
+9. `done` event with token usage is sent; connection closes.
 
 ## 5. Security boundaries
 
 ```
-Internet ─[TLS]─> Firebase Hosting CDN ─[TLS]─> Cloud Run ─[mTLS via Google]─> Firestore / Secret Manager / Gemini
+Internet ─[TLS]─> Vercel CDN ─[TLS]─> Serverless Function ─[HTTPS]─> Gemini REST API
                          │
-                         └─[OIDC token]─> Firebase Auth (verifies fan identity)
+                         └─[CSP, HSTS, X-Frame-Options, X-Content-Type-Options,
+                            Referrer-Policy, Permissions-Policy headers]
 ```
 
-- **Fan → Web:** HTTPS only, HSTS via Firebase Hosting headers.
-- **Web → API:** Bearer JWT (Firebase ID token, 1-hour TTL).
-- **API → Gemini:** API key pulled from Secret Manager at boot, never written to disk.
-- **API → Firestore:** Service account with Firestore User role only (no Admin).
-- **Firestore → Client:** Locked down by `firestore.rules` — every collection requires `request.auth != null`.
+- **Fan → Web:** HTTPS only, HSTS via Vercel + vercel.json headers.
+- **Web → API:** Same-origin (no CORS issues on Vercel).
+- **API → Gemini:** API key in env var, never exposed to client.
+- **Firestore → Client:** Auth required for all reads/writes (strict rules).
 
-## 6. Trial-billing cost controls (lock these in before going live)
+## 6. Multi-model fallback chain
 
-| Control                           | Where set                       | Effect                                    |
-| --------------------------------- | ------------------------------- | ----------------------------------------- |
-| Cloud Run `min-instances = 0`     | `deploy.yml`                    | Service scales to zero when idle.         |
-| Cloud Run `max-instances = 3`     | `deploy.yml`                    | Caps concurrency-driven cost.             |
-| Cloud Run `memory = 512Mi`        | `deploy.yml`                    | Sufficient for Node + LRU cache.          |
-| Firestore daily read budget alert | GCP Console → Billing → Budgets | Email at 80% of $5/day cap.               |
-| Gemini API quota                  | GCP Console → APIs → Quotas     | 60 req/min default; raise only if needed. |
+The Gemini client tries 5 models in order until one succeeds:
+
+1. `gemini-2.5-flash` — newest, may be deprecated for some keys
+2. `gemini-3.1-flash-lite` — free tier in India (1,000 RPD, 15 RPM)
+3. `gemini-3.1-flash` — free tier in India (1,500 RPD, 10 RPM)
+4. `gemini-2.0-flash` — older, may have zero quota in some regions
+5. `gemini-flash-latest` — alias for latest flash model
+
+Retry logic: 2 attempts with 500ms backoff for 503 (overloaded) and 429 (rate limit, excluding limit:0).
+
+## 7. Cost controls (free tier)
+
+| Control                       | Where set                            | Effect                                            |
+| ----------------------------- | ------------------------------------ | ------------------------------------------------- |
+| Vercel function `maxDuration` | `vercel.json`                        | 30s for chat, 10s for health, 15s for diagnostics |
+| Rate limiting                 | `api/_lib/rateLimit.ts`              | 30 req/min per IP (in-memory per instance)        |
+| Gemini `maxOutputTokens`      | `api/_lib/gemini.ts`                 | 500 tokens per response                           |
+| LRU cache                     | `api/_lib/gemini.ts`                 | 100 entries, 5-min TTL, SHA-256 keys              |
+| Page Visibility API           | `apps/web/src/hooks/useCrowdData.ts` | Pauses polling when tab is not focused            |
+| Intent classifier             | `api/_lib/intent.ts`                 | Rule-based, saves a Gemini call for metadata      |
+| Emergency fast-path           | `api/_lib/safety.ts`                 | 29 patterns bypass Gemini entirely (zero tokens)  |

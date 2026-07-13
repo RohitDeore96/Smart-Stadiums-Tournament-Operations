@@ -2,6 +2,8 @@
  * @file apps/web/src/hooks/useCrowdData.ts
  * @description React hook for subscribing to live crowd data.
  *   Tracks history (last 10 readings per zone) for trend sparklines.
+ *   Uses Page Visibility API to pause polling when tab is not focused
+ *   (saves battery + bandwidth on mobile).
  *   Auto-cleans up subscription on unmount.
  */
 
@@ -28,27 +30,57 @@ export function useCrowdData(): UseCrowdDataReturn {
 
   useEffect(() => {
     let mounted = true;
+    let unsubscribe: (() => void) | null = null;
+    let isPaused = false;
 
-    const unsubscribe = subscribeToCrowdData((newReadings) => {
-      if (!mounted) return;
-      setReadings(newReadings);
-      setIsLoading(false);
-      setError(null);
-      setLastUpdated(new Date());
+    const startSubscription = (): void => {
+      if (unsubscribe) return; // already subscribed
+      unsubscribe = subscribeToCrowdData((newReadings) => {
+        if (!mounted || isPaused) return;
+        setReadings(newReadings);
+        setIsLoading(false);
+        setError(null);
+        setLastUpdated(new Date());
 
-      // Update history (keep last 10 readings per zone)
-      const updatedHistory = { ...historyRef.current };
-      for (const reading of newReadings) {
-        const existing = updatedHistory[reading.zoneId] ?? [];
-        updatedHistory[reading.zoneId] = [...existing, reading.densityRatio].slice(-10);
+        // Update history (keep last 10 readings per zone)
+        const updatedHistory = { ...historyRef.current };
+        for (const reading of newReadings) {
+          const existing = updatedHistory[reading.zoneId] ?? [];
+          updatedHistory[reading.zoneId] = [...existing, reading.densityRatio].slice(-10);
+        }
+        historyRef.current = updatedHistory;
+        setHistory(updatedHistory);
+      });
+    };
+
+    const stopSubscription = (): void => {
+      if (unsubscribe) {
+        unsubscribe();
+        unsubscribe = null;
       }
-      historyRef.current = updatedHistory;
-      setHistory(updatedHistory);
-    });
+    };
+
+    // Page Visibility API — pause polling when tab is hidden
+    const handleVisibilityChange = (): void => {
+      if (document.hidden) {
+        isPaused = true;
+        stopSubscription();
+      } else {
+        isPaused = false;
+        startSubscription();
+      }
+    };
+
+    // Start initial subscription
+    startSubscription();
+
+    // Listen for visibility changes
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       mounted = false;
-      unsubscribe();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      stopSubscription();
     };
   }, []);
 

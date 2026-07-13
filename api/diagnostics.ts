@@ -18,9 +18,9 @@ const MODELS_TO_TEST = [
 export default async function handler(_req: VercelRequest, res: VercelResponse): Promise<void> {
   const apiKey = process.env.GEMINI_API_KEY;
   const hasKey = Boolean(apiKey);
-  const keyLength = apiKey?.length ?? 0;
-  const keyPrefix = apiKey ? `${apiKey.slice(0, 6)}...` : 'none';
 
+  // Do NOT expose key prefix or length — that's an information leak.
+  // Only report the key type (format family) for debugging.
   const isLegacyFormat = Boolean(apiKey && apiKey.startsWith('AIzaSy') && apiKey.length >= 35);
   const isNewerFormat = Boolean(apiKey?.startsWith('AQ.'));
   const isValidFormat = isLegacyFormat || isNewerFormat;
@@ -40,7 +40,7 @@ export default async function handler(_req: VercelRequest, res: VercelResponse):
     recommendation =
       'AQ. keys cannot access newer free-tier models in India. Get an AIzaSy... key from https://aistudio.google.com/app/apikey for full model access.';
   } else {
-    keyType = `Unknown format (${keyPrefix}) ❌`;
+    keyType = 'Unknown format ❌';
     recommendation = 'Get a valid AI Studio key from https://aistudio.google.com/app/apikey';
   }
 
@@ -163,8 +163,6 @@ export default async function handler(_req: VercelRequest, res: VercelResponse):
       time: new Date().toISOString(),
       gemini: {
         keySet: hasKey,
-        keyLength,
-        keyPrefix,
         isValidFormat,
         keyType,
         models: MODELS_TO_TEST,
