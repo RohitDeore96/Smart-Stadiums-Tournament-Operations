@@ -1,22 +1,30 @@
 /**
  * @file apps/api/src/index.ts
- * @description Cloud Run backend entry point. Wires boot order + graceful
- *   shutdown. All app configuration lives in app.ts so tests can spin up
- *   isolated instances via buildApp().
+ * @description Cloud Run backend entry point. Boot order:
+ *   1. Load secrets from Secret Manager (prod only)
+ *   2. Build Fastify app (validates env, registers routes)
+ *   3. Listen on PORT
+ *   4. Wire graceful shutdown (SIGTERM/SIGINT)
  */
 
 import { buildApp } from './app.js';
 import { loadEnv } from './config/env.js';
+import { loadSecrets } from './config/secrets.js';
 import { logger } from './utils/logger.js';
 
 async function bootstrap(): Promise<void> {
+  // Step 1: Load secrets (no-op in dev/test)
+  await loadSecrets();
+
+  // Step 2: Build app
   const env = loadEnv();
   const app = await buildApp();
 
+  // Step 3: Listen
   try {
     await app.listen({
       port: env.PORT,
-      host: '0.0.0.0', // Cloud Run requires 0.0.0.0 binding
+      host: '0.0.0.0',
     });
     logger.info({ port: env.PORT, env: env.NODE_ENV }, '🚀 StadiumOps API listening');
   } catch (err: unknown) {
@@ -24,8 +32,8 @@ async function bootstrap(): Promise<void> {
     process.exit(1);
   }
 
-  // Graceful shutdown — Cloud Run sends SIGTERM 10s before killing container.
-  const shutdown = async (signal: string) => {
+  // Step 4: Graceful shutdown
+  const shutdown = async (signal: string): Promise<void> => {
     logger.info({ signal }, 'Shutting down gracefully…');
     try {
       await app.close();

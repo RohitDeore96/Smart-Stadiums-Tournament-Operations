@@ -53,8 +53,22 @@ module.exports = tseslint.config(
       ],
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-floating-promises': 'error',
-      '@typescript-eslint/no-misused-promises': 'error',
-      '@typescript-eslint/require-await': 'warn',
+      '@typescript-eslint/no-misused-promises': [
+        'error',
+        {
+          checksVoidReturn: {
+            arguments: false,
+            attributes: false,
+          },
+        },
+      ],
+      // Fastify plugin functions are async by convention (return Promise<void>)
+      // even when their body has no top-level await.
+      '@typescript-eslint/require-await': 'off',
+      // Firebase Admin SDK types are tricky — `??` is defensive even when TS thinks it's unnecessary
+      '@typescript-eslint/no-unnecessary-condition': 'off',
+      // Generic single-use type params are common in cache wrappers
+      '@typescript-eslint/no-unnecessary-type-parameters': 'off',
       '@typescript-eslint/consistent-type-imports': [
         'error',
         { prefer: 'type-imports', fixStyle: 'inline-type-imports' },
@@ -77,6 +91,15 @@ module.exports = tseslint.config(
     rules: {
       '@typescript-eslint/no-var-requires': 'off',
       'no-console': 'off',
+    },
+  },
+
+  // -------- Route files: Fastify's preHandler type doesn't play nice with
+  //         no-misused-promises. Disable it for route definitions. --------
+  {
+    files: ['**/src/routes/**/*.ts'],
+    rules: {
+      '@typescript-eslint/no-misused-promises': 'off',
     },
   },
 );

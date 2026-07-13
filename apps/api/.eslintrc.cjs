@@ -22,6 +22,23 @@ module.exports = {
     // Node-specific
     'no-process-exit': 'off', // we exit on boot errors (legitimate)
     '@typescript-eslint/no-non-null-assertion': 'error',
+    // Fastify plugin functions are async by convention (return Promise<void>)
+    // even when their body has no top-level await.
+    '@typescript-eslint/require-await': 'off',
+    // We use the admin namespace import for firebase-admin types
+    '@typescript-eslint/no-unnecessary-type-parameters': 'off',
+    // Firebase Admin types are tricky — `??` is defensive even when TS thinks it's unnecessary
+    '@typescript-eslint/no-unnecessary-condition': 'off',
+    // Fastify route handlers return Promise — disable the void-return check
+    '@typescript-eslint/no-misused-promises': [
+      'error',
+      {
+        checksVoidReturn: {
+          arguments: false,
+          attributes: false,
+        },
+      },
+    ],
   },
   ignorePatterns: ['dist', 'coverage', 'node_modules'],
 };

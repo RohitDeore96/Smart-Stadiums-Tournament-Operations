@@ -1,11 +1,10 @@
 /**
  * @file apps/api/src/app.ts
- * @description Fastify application factory.
+ * @description Fastify application factory. Wires all plugins, middleware,
+ *   and routes. Phase 2 adds the full route table (chat, matches, incidents,
+ *   stadiums, announcements) plus auth + validation middleware.
  *
- * Phase 1 scope: bootable skeleton with health route + security plugins.
- * Phase 2 will register the full route table (chat, matches, incidents, etc.).
- *
- * Why a factory function (not a global instance):
+ *   Why a factory function (not a global instance):
  *   - Enables integration tests to spin up isolated app instances.
  *   - Avoids side-effect ordering bugs across hot reloads.
  */
@@ -19,10 +18,18 @@ import sensible from '@fastify/sensible';
 import { loadEnv } from './config/env.js';
 import { logger } from './utils/logger.js';
 import { AppError } from './utils/errors.js';
+import { healthRoutes } from './routes/health.js';
+import { chatRoutes } from './routes/chat.js';
+import { matchRoutes } from './routes/matches.js';
+import { stadiumRoutes } from './routes/stadiums.js';
+import { incidentRoutes } from './routes/incidents.js';
+import { announcementRoutes } from './routes/announcements.js';
 
 export interface BuildAppOptions {
   /** Allow tests to override env without touching process.env. */
   envOverrides?: Partial<ReturnType<typeof loadEnv>>;
+  /** Skip route registration (useful for some unit tests). */
+  routesOnly?: ('health' | 'chat' | 'matches' | 'stadiums' | 'incidents' | 'announcements')[];
 }
 
 /**
@@ -33,8 +40,8 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
   const env = { ...loadEnv(), ...options.envOverrides };
 
   const app = Fastify({
-    logger: false, // we use our own pino instance for redaction control
-    trustProxy: true, // Cloud Run sits behind a Google LB
+    logger: false,
+    trustProxy: true,
     disableRequestLogging: false,
     requestIdHeader: 'x-request-id',
     requestIdLogLabel: 'requestId',
@@ -57,14 +64,13 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
     origin: env.ALLOWED_ORIGINS,
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Authorization', 'Content-Type', 'Accept-Language'],
-    credentials: false, // we use Bearer tokens, not cookies
+    credentials: false,
     maxAge: 3600,
   });
 
   await app.register(rateLimit, {
     max: env.RATE_LIMIT_MAX,
     timeWindow: env.RATE_LIMIT_WINDOW_MS,
-    // Per-IP key generator — auth-based override happens in Phase 2
     keyGenerator: (req) => req.ip,
     errorResponseBuilder: (_req, context) => ({
       error: {
@@ -91,7 +97,6 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
       return;
     }
 
-    // Fastify validation errors (from schema validation)
     if (err.validation) {
       reply.status(400).send({
         error: {
@@ -104,7 +109,6 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
       return;
     }
 
-    // Unknown error — never leak internals
     logger.error({ err, requestId: req.id }, 'Unhandled error');
     reply.status(500).send({
       error: {
@@ -115,17 +119,34 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
     });
   });
 
-  // ---- Health route (Phase 1 only — full routes arrive in Phase 2) ----
-  app.get('/api/v1/health', () => {
-    return {
-      data: {
-        status: 'ok',
-        service: 'stadiumops-api',
-        version: '0.1.0',
-        time: new Date().toISOString(),
-      },
-    };
-  });
+  // ---- Register routes ----
+  const routesToRegister = options.routesOnly ?? [
+    'health',
+    'chat',
+    'matches',
+    'stadiums',
+    'incidents',
+    'announcements',
+  ];
+
+  if (routesToRegister.includes('health')) {
+    await app.register(healthRoutes);
+  }
+  if (routesToRegister.includes('chat')) {
+    await app.register(chatRoutes);
+  }
+  if (routesToRegister.includes('matches')) {
+    await app.register(matchRoutes);
+  }
+  if (routesToRegister.includes('stadiums')) {
+    await app.register(stadiumRoutes);
+  }
+  if (routesToRegister.includes('incidents')) {
+    await app.register(incidentRoutes);
+  }
+  if (routesToRegister.includes('announcements')) {
+    await app.register(announcementRoutes);
+  }
 
   return app;
 }
