@@ -102,4 +102,24 @@ module.exports = tseslint.config(
       '@typescript-eslint/no-misused-promises': 'off',
     },
   },
+
+  // -------- Vercel serverless functions: console.log is the standard
+  //         logging mechanism (no pino in serverless for size) --------
+  {
+    files: ['api/**/*.ts'],
+    rules: {
+      'no-console': 'off',
+      '@typescript-eslint/require-await': 'off',
+      '@typescript-eslint/no-unnecessary-condition': 'off',
+      '@typescript-eslint/no-misused-promises': [
+        'error',
+        {
+          checksVoidReturn: {
+            arguments: false,
+            attributes: false,
+          },
+        },
+      ],
+    },
+  },
 );

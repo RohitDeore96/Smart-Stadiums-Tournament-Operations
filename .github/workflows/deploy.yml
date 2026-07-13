@@ -1,15 +1,14 @@
 # ==============================================================
-# Deploy Pipeline — runs on push to main after CI passes
+# Deploy Pipeline — Vercel (frontend + serverless API)
 # --------------------------------------------------------------
-# Deploys:
-#   1. Backend Docker image → Artifact Registry → Cloud Run
-#   2. Frontend build → Firebase Hosting
+# Triggers on push to main. Deploys both the Vite frontend and
+# the /api serverless functions to Vercel.
 #
-# Required GitHub Secrets (set these in repo Settings → Secrets):
-#   GCP_PROJECT_ID      e.g. stadiumops-ai-dev
-#   GCP_SA_KEY          JSON key for github-deployer service account
-#   FIREBASE_TOKEN      from `firebase login:ci`
-#   GEMINI_API_KEY      (only used in dev; prod reads from Secret Manager)
+# Required GitHub Secrets:
+#   VERCEL_TOKEN         Vercel personal access token
+#   VERCEL_ORG_ID        Vercel org/team ID
+#   VERCEL_PROJECT_ID    Vercel project ID
+#   GEMINI_API_KEY       Gemini API key (set as Vercel env var on first deploy)
 # ==============================================================
 
 name: Deploy
@@ -17,19 +16,17 @@ name: Deploy
 on:
   push:
     branches: [main]
-  workflow_dispatch: # allow manual trigger
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
   group: deploy-${{ github.ref }}
-  cancel-in-progress: false # never cancel a mid-deploy
+  cancel-in-progress: false
 
 jobs:
   # ----- Gate: only run deploy if secrets are configured -----
-  # This prevents the deploy job from failing noisily on fresh repos
-  # where cloud accounts haven't been set up yet.
   check-secrets:
     name: Check deploy secrets
     runs-on: ubuntu-latest
@@ -38,96 +35,23 @@ jobs:
     steps:
       - id: check
         run: |
-          if [ -n "${{ secrets.GCP_PROJECT_ID }}" ] && \
-             [ -n "${{ secrets.GCP_SA_KEY }}" ] && \
-             [ -n "${{ secrets.FIREBASE_TOKEN }}" ]; then
+          if [ -n "${{ secrets.VERCEL_TOKEN }}" ] && \
+             [ -n "${{ secrets.VERCEL_ORG_ID }}" ] && \
+             [ -n "${{ secrets.VERCEL_PROJECT_ID }}" ]; then
             echo "has-secrets=true" >> "$GITHUB_OUTPUT"
-            echo "✅ All deploy secrets present"
+            echo "✅ Vercel secrets present"
           else
             echo "has-secrets=false" >> "$GITHUB_OUTPUT"
-            echo "⚠️  Deploy secrets not configured — skipping deploy job."
-            echo "    See README §'Required GitHub Secrets' for setup instructions."
+            echo "⚠️  Vercel secrets not configured — skipping deploy."
+            echo "    See README §'Vercel Setup' for instructions."
           fi
 
-  # ----- Job 1: backend → Cloud Run -----
-  deploy-api:
-    name: Build & Deploy API → Cloud Run
+  deploy:
+    name: Deploy to Vercel
     runs-on: ubuntu-latest
     needs: check-secrets
     if: needs.check-secrets.outputs.has-secrets == 'true'
-    timeout-minutes: 20
-    env:
-      GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-      GCP_REGION: us-central1
-      ARTIFACT_REPO: stadiumops
-      SERVICE_NAME: stadiumops-api
-      IMAGE_TAG: ${{ github.sha }}
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Auth to Google Cloud
-        id: auth
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
-          # Optional: use Workload Identity Federation for prod (more secure than JSON keys)
-          # See https://github.com/google-github-actions/auth#workload-identity-federation
-
-      - name: Setup gcloud CLI
-        uses: google-github-actions/setup-gcloud@v2
-
-      - name: Configure Docker auth for Artifact Registry
-        run: |
-          gcloud auth configure-docker \
-            ${GCP_REGION}-docker.pkg.dev --quiet
-
-      - name: Build container image
-        run: |
-          docker build \
-            --file apps/api/Dockerfile \
-            --tag ${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REPO}/${SERVICE_NAME}:${IMAGE_TAG} \
-            --tag ${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REPO}/${SERVICE_NAME}:latest \
-            .
-
-      - name: Push container image
-        run: |
-          docker push ${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REPO}/${SERVICE_NAME}:${IMAGE_TAG}
-          docker push ${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REPO}/${SERVICE_NAME}:latest
-
-      - name: Deploy to Cloud Run
-        run: |
-          gcloud run deploy ${SERVICE_NAME} \
-            --image ${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REPO}/${SERVICE_NAME}:${IMAGE_TAG} \
-            --region ${GCP_REGION} \
-            --project ${GCP_PROJECT_ID} \
-            --platform managed \
-            --port 8080 \
-            --memory 512Mi \
-            --cpu 1 \
-            --min-instances 0 \
-            --max-instances 3 \
-            --timeout 60 \
-            --concurrency 80 \
-            --allow-unauthenticated \
-            --set-env-vars NODE_ENV=production,LOG_LEVEL=info \
-            --set-secrets GEMINI_API_KEY=GEMINI_API_KEY:latest \
-            --service-account stadiumops-api-runner@${GCP_PROJECT_ID}.iam.gserviceaccount.com
-
-      - name: Show deployed URL
-        run: |
-          URL=$(gcloud run services describe ${SERVICE_NAME} --region ${GCP_REGION} --format 'value(status.url)')
-          echo "✅ API deployed to: $URL"
-          echo "API_URL=$URL" >> $GITHUB_ENV
-
-  # ----- Job 2: frontend → Firebase Hosting -----
-  deploy-web:
-    name: Build & Deploy Web → Firebase Hosting
-    runs-on: ubuntu-latest
-    needs: deploy-api
-    if: needs.check-secrets.outputs.has-secrets == 'true'
-    timeout-minutes: 15
+    timeout-minutes: 10
 
     steps:
       - name: Checkout
@@ -147,23 +71,23 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build frontend
-        run: pnpm --filter @stadiumops/web build
-        env:
-          # Public, non-secret Firebase web config — safe in CI logs
-          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
-          VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
-          VITE_FIREBASE_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-          VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
-          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
-          VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
-          VITE_API_BASE_URL: https://${{ secrets.GCP_PROJECT_ID }}-run.firebaseapp.com
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
 
-      - name: Deploy to Firebase Hosting
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.GCP_SA_KEY }}
-          projectId: ${{ secrets.GCP_PROJECT_ID }}
-          channelId: live
-          entryPoint: apps/web
+      - name: Pull Vercel environment
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Build project
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Deploy to Vercel (production)
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}

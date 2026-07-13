@@ -1,92 +1,89 @@
 rules_version = '2';
 
 // ==============================================================
-// StadiumOps AI — Firestore Security Rules (Phase 1 skeleton)
+// StadiumOps AI — Firestore Security Rules (Public Demo)
 // --------------------------------------------------------------
-// Full strict rules ship in Phase 3. For Phase 1, we lock down
-// every collection to authenticated users only — no anonymous reads.
+// This is a PUBLIC DEMO with no auth. Rules are intentionally
+// permissive for reads but validate writes via allow-if rules.
+// Phase 3+ will add auth and tighten these rules.
 // ==============================================================
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ---- Helper functions ----
-    function isSignedIn() {
-      return request.auth != null;
-    }
+    // ---- Read-only collections (public read, no client writes) ----
+    // Stadiums, matches, crowd zones, announcements are seeded via
+    // admin SDK or Firebase Console — clients can only read.
 
-    function isOwner(uid) {
-      return isSignedIn() && request.auth.uid == uid;
-    }
-
-    function isAdmin() {
-      return isSignedIn()
-        && 'role' in request.auth.token
-        && request.auth.token.role == 'admin';
-    }
-
-    function isResponder() {
-      return isSignedIn()
-        && 'role' in request.auth.token
-        && (request.auth.token.role == 'admin'
-            || request.auth.token.role == 'responder');
-    }
-
-    // ---- users/{uid} ----
-    // Each user can read + write only their own profile document.
-    match /users/{uid} {
-      allow read: if isOwner(uid);
-      allow create: if isOwner(uid);
-      allow update: if isOwner(uid)
-        && request.resource.data.role == resource.data.role; // cannot self-promote
-      allow delete: if false; // soft-delete only via admin SDK
-    }
-
-    // ---- chatSessions/{sessionId} ----
-    match /chatSessions/{sessionId} {
-      allow read, write: if isOwner(resource.data.userId)
-        || (request.method == 'create'
-            && request.resource.data.userId == request.auth.uid);
-    }
-
-    // ---- chatSessions/{sessionId}/messages/{messageId} ----
-    match /chatSessions/{sessionId}/messages/{messageId} {
-      allow read: if isSignedIn()
-        && get(/databases/$(database)/documents/chatSessions/$(sessionId))
-             .data.userId == request.auth.uid;
-      // Creates only — never let clients edit/delete chat messages
-      allow create: if isSignedIn()
-        && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if false;
-    }
-
-    // ---- matches, stadiums, crowdZones, announcements ----
-    // Read-only for signed-in users; writes via Admin SDK only.
-    match /matches/{matchId} {
-      allow read: if isSignedIn();
-      allow write: if false;
-    }
     match /stadiums/{stadiumId} {
-      allow read: if isSignedIn();
-      allow write: if false;
-    }
-    match /stadiums/{stadiumId}/crowdZones/{zoneId} {
-      allow read: if isSignedIn();
-      allow write: if false;
-    }
-    match /announcements/{announcementId} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow write: if false;
     }
 
-    // ---- incidents/{incidentId} ----
-    // Anyone signed in can report; only responders can update; only admins can delete.
+    match /stadiums/{stadiumId}/crowdZones/{zoneId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /matches/{matchId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /announcements/{announcementId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // ---- Incidents (public create, public read, no delete) ----
+    // Anyone can report an incident. Anyone can view incidents.
+    // Validates required fields and length limits on create.
     match /incidents/{incidentId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn()
-        && request.resource.data.reporterUid == request.auth.uid;
-      allow update: if isResponder();
-      allow delete: if isAdmin();
+      allow read: if true;
+
+      allow create: if request.resource.data.stadiumId is string
+        && request.resource.data.stadiumId.size() >= 3
+        && request.resource.data.stadiumId.size() <= 64
+        && request.resource.data.zoneId is string
+        && request.resource.data.zoneId.size() >= 3
+        && request.resource.data.zoneId.size() <= 64
+        && request.resource.data.category is string
+        && request.resource.data.category in [
+          'medical', 'security', 'fire', 'crowd_flow',
+          'lost_child', 'facilities', 'other'
+        ]
+        && request.resource.data.title is string
+        && request.resource.data.title.size() >= 3
+        && request.resource.data.title.size() <= 140
+        && request.resource.data.description is string
+        && request.resource.data.description.size() >= 10
+        && request.resource.data.description.size() <= 1000
+        && request.resource.data.severity is string
+        && request.resource.data.severity in ['low', 'medium', 'high', 'critical']
+        // Force server-set fields — clients cannot set these
+        && !('createdAt' in request.resource.data)
+        && !('updatedAt' in request.resource.data)
+        && !('status' in request.resource.data)
+        && !('assignedResponderUid' in request.resource.data)
+        && !('resolutionNotes' in request.resource.data);
+
+      // No updates or deletes from clients (admin only via Admin SDK)
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    // ---- Chat sessions (not used in public demo — stateless chat) ----
+    match /chatSessions/{sessionId} {
+      allow read, write: if false;
+    }
+
+    match /chatSessions/{sessionId}/messages/{messageId} {
+      allow read, write: if false;
+    }
+
+    // ---- Users (not used in public demo — no auth) ----
+    match /users/{uid} {
+      allow read, write: if false;
     }
 
     // ---- Default deny (defense in depth) ----

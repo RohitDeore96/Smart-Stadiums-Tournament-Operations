@@ -1,6 +1,6 @@
 {
   "name": "stadiumops-ai",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "private": true,
   "description": "StadiumOps AI — GenAI-enabled stadium operations platform for FIFA World Cup 2026",
   "license": "MIT",
@@ -9,20 +9,33 @@
     "node": ">=20.11.0"
   },
   "scripts": {
-    "dev:api": "pnpm --filter @stadiumops/api dev",
     "dev:web": "pnpm --filter @stadiumops/web dev",
-    "build": "pnpm -r --stream build",
-    "test": "pnpm -r --stream test",
-    "lint": "pnpm -r --stream lint",
-    "typecheck": "pnpm -r --stream typecheck",
+    "dev:api": "vercel dev",
+    "build": "pnpm --filter @stadiumops/shared build && pnpm --filter @stadiumops/web build",
+    "test": "pnpm -r --stream test && vitest run --config api/vitest.config.ts",
+    "lint": "pnpm -r --stream lint && eslint \"api/**/*.ts\" --max-warnings=0",
+    "typecheck": "pnpm -r --stream typecheck && tsc --noEmit -p api/tsconfig.json",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\"",
-    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\""
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\"",
+    "deploy": "vercel --prod",
+    "deploy:preview": "vercel"
   },
   "devDependencies": {
     "@eslint/js": "^9.11.1",
+    "@types/node": "^20.16.10",
+    "@typescript-eslint/eslint-plugin": "^8.8.0",
+    "@typescript-eslint/parser": "^8.8.0",
+    "@vercel/node": "^3.2.10",
     "eslint": "^8.57.1",
     "prettier": "^3.3.3",
     "typescript": "^5.6.2",
-    "typescript-eslint": "^8.8.0"
+    "typescript-eslint": "^8.8.0",
+    "vitest": "^2.1.2"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.21.0",
+    "@stadiumops/shared": "workspace:*",
+    "lru-cache": "^11.0.1",
+    "zod": "^3.23.8"
   }
 }
