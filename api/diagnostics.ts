@@ -80,7 +80,7 @@ export default async function handler(_req: VercelRequest, res: VercelResponse):
             httpStatus: testResponse.status,
             responsePreview: responseText.slice(0, 50),
           });
-          if (!workingModel) workingModel = model;
+          workingModel ??= model;
         } else {
           const errorText = await testResponse.text();
           let errorMsg = errorText.slice(0, 200);
@@ -124,7 +124,7 @@ export default async function handler(_req: VercelRequest, res: VercelResponse):
       r.error?.includes('ACCESS_TOKEN_TYPE_UNSUPPORTED'),
     );
     const hasQuotaError = modelResults.every(
-      (r) => r.error?.includes('limit: 0') || r.error?.includes('quota'),
+      (r) => r.error?.includes('limit: 0') ?? r.error?.includes('quota'),
     );
 
     if (hasLocationError) {
