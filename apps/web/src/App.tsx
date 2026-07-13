@@ -26,7 +26,7 @@ export function App(): ReactElement {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch('/api/v1/health')
+    fetch('/api/health')
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${String(r.status)}`);
         return r.json() as Promise<HealthResponse>;
