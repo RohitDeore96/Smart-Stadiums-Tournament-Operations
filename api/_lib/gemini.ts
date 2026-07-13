@@ -176,6 +176,113 @@ async function callGeminiModel(
   throw lastError ?? new GeminiModelError(500, 'Unknown error', model);
 }
 
+/**
+ * Calls the Gemini REST API with streaming (streamGenerateContent endpoint).
+ * Returns an async generator that yields text chunks as they arrive.
+ */
+async function* callGeminiModelStream(
+  model: string,
+  systemPrompt: string,
+  userMessage: string,
+): AsyncGenerator<{ chunk: string; tokenUsage?: TokenUsage }> {
+  const apiKey = getApiKey();
+
+  if (!isValidAiStudioKey(apiKey)) {
+    throw new GeminiModelError(400, 'Invalid key format', model);
+  }
+
+  const endpoint = `${API_BASE}/${model}:streamGenerateContent?key=${apiKey}&alt=sse`;
+  const requestBody = {
+    system_instruction: { parts: [{ text: systemPrompt }] },
+    contents: [{ parts: [{ text: userMessage }] }],
+    generationConfig: { temperature: 0.3, topP: 0.9, maxOutputTokens: 500 },
+    safetySettings: [
+      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+    ],
+  };
+
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(requestBody),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    let errorMsg = `HTTP ${String(response.status)}`;
+    try {
+      const errorJson = JSON.parse(errorText) as { error?: { message?: string } };
+      if (errorJson.error?.message) errorMsg = errorJson.error.message;
+    } catch {
+      if (errorText) errorMsg = errorText.slice(0, 200);
+    }
+    throw new GeminiModelError(response.status, errorMsg, model);
+  }
+
+  if (!response.body) {
+    throw new GeminiModelError(500, 'No response body for streaming', model);
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let tokenUsage: TokenUsage | undefined;
+
+  let readDone = false;
+  while (!readDone) {
+    const result: { done: boolean; value?: Uint8Array } = await reader.read();
+    readDone = result.done;
+    if (readDone) break;
+
+    const value = result.value;
+    if (!value) continue;
+
+    buffer += decoder.decode(value, { stream: true });
+
+    // SSE format: lines starting with "data: " followed by JSON
+    const lines = buffer.split('\n');
+    buffer = lines.pop() ?? '';
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed.startsWith('data: ')) continue;
+
+      const jsonStr = trimmed.slice(6);
+      try {
+        const data = JSON.parse(jsonStr) as GeminiResponseBody;
+
+        if (data.error) {
+          throw new GeminiModelError(500, data.error.message ?? 'Unknown error', model);
+        }
+
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (text) {
+          yield { chunk: text };
+        }
+
+        if (data.usageMetadata) {
+          tokenUsage = {
+            promptTokens: data.usageMetadata.promptTokenCount ?? 0,
+            completionTokens: data.usageMetadata.candidatesTokenCount ?? 0,
+            totalTokens: data.usageMetadata.totalTokenCount ?? 0,
+          };
+        }
+      } catch (parseErr) {
+        // If it's our GeminiModelError, rethrow
+        if (parseErr instanceof GeminiModelError) throw parseErr;
+        // Otherwise skip malformed JSON (partial chunk)
+      }
+    }
+  }
+
+  if (tokenUsage) {
+    yield { chunk: '', tokenUsage };
+  }
+}
+
 async function callGeminiREST(
   systemPrompt: string,
   userMessage: string,
@@ -277,6 +384,47 @@ export async function* streamReply(req: GeminiRequest): AsyncGenerator<{
     return;
   }
 
+  // Try real streaming first — yields tokens as they arrive from Gemini
+  for (const model of MODEL_NAMES) {
+    try {
+      console.log(`[gemini] Streaming with model: ${model}`);
+      let fullText = '';
+      let finalTokenUsage: TokenUsage = { promptTokens: 0, completionTokens: 0, totalTokens: 0 };
+      let gotAnyChunk = false;
+
+      for await (const result of callGeminiModelStream(model, systemPrompt, wrappedUserMessage)) {
+        if (result.chunk) {
+          fullText += result.chunk;
+          gotAnyChunk = true;
+          yield { chunk: result.chunk, done: false, cached: false };
+        }
+        if (result.tokenUsage) {
+          finalTokenUsage = result.tokenUsage;
+        }
+      }
+
+      if (gotAnyChunk && fullText) {
+        cache.set(cacheKey, { text: fullText, tokenUsage: finalTokenUsage });
+        console.log(
+          `[gemini] Stream success with ${model}, tokens: ${String(finalTokenUsage.totalTokens)}`,
+        );
+        yield { chunk: '', done: true, tokenUsage: finalTokenUsage, cached: false };
+        return;
+      }
+    } catch (err: unknown) {
+      if (err instanceof GeminiModelError) {
+        console.error(
+          `[gemini] Stream failed with ${model}: ${err.message} (HTTP ${String(err.statusCode)})`,
+        );
+        // Try next model
+        continue;
+      }
+      throw err;
+    }
+  }
+
+  // All streaming attempts failed — fall back to non-streaming
+  console.log('[gemini] All streaming failed, falling back to non-streaming');
   const { text, tokenUsage } = await callGeminiREST(systemPrompt, wrappedUserMessage);
   cache.set(cacheKey, { text, tokenUsage });
 
