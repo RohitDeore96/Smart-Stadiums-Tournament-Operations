@@ -13,7 +13,7 @@ interface NavigationProps {
 
 interface NavItem {
   path: string;
-  labelKey: 'nav.dashboard' | 'nav.chat' | 'nav.incidents';
+  labelKey: 'nav.dashboard' | 'nav.chat' | 'nav.incidents' | 'nav.announcements';
   icon: string;
 }
 
@@ -21,6 +21,7 @@ const NAV_ITEMS: NavItem[] = [
   { path: '/', labelKey: 'nav.dashboard', icon: '📊' },
   { path: '/chat', labelKey: 'nav.chat', icon: '💬' },
   { path: '/incidents', labelKey: 'nav.incidents', icon: '⚠️' },
+  { path: '/announcements', labelKey: 'nav.announcements', icon: '📢' },
 ];
 
 export const Navigation: FC<NavigationProps> = ({ activePath }) => {

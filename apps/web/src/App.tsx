@@ -11,6 +11,7 @@ import { Layout } from './components/Layout.js';
 import { DashboardPage } from './pages/DashboardPage.js';
 import { ChatPage } from './pages/ChatPage.js';
 import { IncidentsPage } from './pages/IncidentsPage.js';
+import { AnnouncementsPage } from './pages/AnnouncementsPage.js';
 
 const RouteTracker: FC = () => {
   const location = useLocation();
@@ -27,6 +28,7 @@ const RouteTracker: FC = () => {
         <Route path="/" element={<DashboardPage />} />
         <Route path="/chat" element={<ChatPage />} />
         <Route path="/incidents" element={<IncidentsPage />} />
+        <Route path="/announcements" element={<AnnouncementsPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Layout>

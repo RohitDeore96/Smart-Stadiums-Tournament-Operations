@@ -44,7 +44,6 @@ jobs:
           cache: pnpm
           cache-dependency-path: |
             pnpm-lock.yaml
-            apps/api/pnpm-lock.yaml
             apps/web/pnpm-lock.yaml
 
       - name: Install dependencies

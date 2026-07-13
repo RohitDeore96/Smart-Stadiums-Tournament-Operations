@@ -4,7 +4,7 @@
  *   Manages message history, streaming state, and error handling.
  */
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import type { ChatStreamEvent, Locale } from '@stadiumops/shared';
 import { streamChat } from '../services/chatService.js';
 
@@ -37,10 +37,34 @@ interface UseChatReturn {
 }
 
 export function useChat(options: UseChatOptions): UseChatReturn {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>(() => {
+    // Load chat history from localStorage on mount (multi-turn memory)
+    try {
+      const stored = localStorage.getItem('stadiumops-chat-history');
+      if (stored) {
+        const parsed = JSON.parse(stored) as ChatMessage[];
+        // Only load last 20 messages to prevent unbounded growth
+        return parsed.slice(-20);
+      }
+    } catch {
+      // Ignore parse errors
+    }
+    return [];
+  });
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Persist messages to localStorage whenever they change
+  useEffect(() => {
+    try {
+      // Only persist non-streaming messages (skip empty assistant placeholders)
+      const toSave = messages.filter((m) => m.content.length > 0).slice(-20);
+      localStorage.setItem('stadiumops-chat-history', JSON.stringify(toSave));
+    } catch {
+      // localStorage might be full or unavailable
+    }
+  }, [messages]);
 
   const sendMessage = useCallback(
     async (text: string) => {

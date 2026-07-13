@@ -13,6 +13,7 @@ export type TranslationKey =
   | 'nav.dashboard'
   | 'nav.chat'
   | 'nav.incidents'
+  | 'nav.announcements'
   | 'nav.language'
   | 'nav.skipToMain'
   | 'dashboard.title'
@@ -84,6 +85,7 @@ const en: Translations = {
   'nav.dashboard': 'Dashboard',
   'nav.chat': 'Assistant',
   'nav.incidents': 'Incidents',
+  'nav.announcements': 'Announcements',
   'nav.language': 'Language',
   'nav.skipToMain': 'Skip to main content',
   'dashboard.title': 'Operations Dashboard',
@@ -211,6 +213,7 @@ const fr: Translations = {
   'nav.dashboard': 'Tableau de bord',
   'nav.chat': 'Assistant',
   'nav.incidents': 'Incidents',
+  'nav.announcements': 'Announcements',
   'nav.language': 'Langue',
   'nav.skipToMain': 'Aller au contenu principal',
   'dashboard.title': 'Tableau de bord des opérations',
