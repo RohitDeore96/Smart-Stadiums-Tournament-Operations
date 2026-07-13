@@ -153,10 +153,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     const message = err instanceof Error ? err.message : 'Unknown error';
     console.error('[chat] Streaming failed:', message);
 
+    // Detect specific error types for better UX
+    const isMissingKey = message.includes('GEMINI_API_KEY');
+    const isQuotaExceeded = message.includes('quota') || message.includes('RATE_LIMIT');
+    const isContentFilter = message.includes('safety') || message.includes('blocked');
+
+    const errorCode = isMissingKey
+      ? 'SERVICE_UNAVAILABLE'
+      : isQuotaExceeded
+        ? 'RATE_LIMITED'
+        : isContentFilter
+          ? 'CONTENT_FILTERED'
+          : 'INTERNAL_ERROR';
+
+    const errorMessage = isMissingKey
+      ? 'AI service is not configured. Please contact support.'
+      : isQuotaExceeded
+        ? 'AI service is busy. Please try again in a moment.'
+        : isContentFilter
+          ? 'Your message was filtered by safety controls.'
+          : 'Failed to generate reply';
+
     sendEvent({
       type: 'error',
-      code: 'INTERNAL_ERROR',
-      message: 'Failed to generate reply',
+      code: errorCode,
+      message: errorMessage,
     });
 
     res.end();
