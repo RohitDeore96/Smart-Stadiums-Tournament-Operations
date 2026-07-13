@@ -6,7 +6,7 @@
 
 import { createContext, useContext, useEffect, useState, type ReactNode, type FC } from 'react';
 import type { Locale } from '@stadiumops/shared';
-import { translations, SUPPORTED_LOCALES, type TranslationKey } from '../i18n/translations.js';
+import { translations, SUPPORTED_LOCALES, type TranslationKey } from '../i18n/index.js';
 
 interface I18nContextValue {
   locale: Locale;
@@ -58,7 +58,9 @@ export const I18nProvider: FC<I18nProviderProps> = ({ children }) => {
   }, [locale]);
 
   const t = (key: TranslationKey): string => {
-    return translations[locale]?.[key] ?? translations.en[key] ?? key;
+    const localeTranslations = translations[locale];
+    const enTranslations = translations.en;
+    return localeTranslations?.[key] ?? enTranslations?.[key] ?? key;
   };
 
   const isRTL = locale === 'ar';

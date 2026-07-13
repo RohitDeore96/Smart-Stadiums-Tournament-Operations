@@ -79,8 +79,8 @@ export const AnnouncementsPage: FC = () => {
   return (
     <>
       <section className="page-header">
-        <h2 className="page-title">📢 Announcements</h2>
-        <p className="page-subtitle">Organizer dashboard — publish stadium-wide announcements</p>
+        <h2 className="page-title">{t('announcements.title')}</h2>
+        <p className="page-subtitle">{t('announcements.subtitle')}</p>
       </section>
 
       {success && (

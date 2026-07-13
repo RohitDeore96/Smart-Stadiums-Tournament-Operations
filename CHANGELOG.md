@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - Vercel serverless functions: /api/chat (SSE streaming), /api/health, /api/diagnostics
-- Direct Gemini REST API integration (no SDK, 5-model fallback chain)
+- Direct Gemini REST API integration (no SDK, 3-model fallback chain)
 - 3-layer prompt injection defense (system prompt + XML delimiters + sanitizeUserText)
 - 29 emergency keyword patterns with canned safety replies
 - Rule-based intent classifier (6 intents, confidence scoring)
@@ -32,7 +32,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - WCAG 2.1 AA: skip link, ARIA live, keyboard nav, reduced-motion
 - Strict Firestore rules (auth required for all reads/writes)
 - CSP + HSTS + security headers on all routes
-- 90 unit tests (safety, intent, prompt, schema, chat, app)
+- 78 unit tests (safety, intent, prompt, schema, chat, app)
 
 ### Changed
 

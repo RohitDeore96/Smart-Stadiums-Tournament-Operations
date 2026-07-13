@@ -6,7 +6,7 @@
  *   Challenge area: Crowd Management + Real-time Decision Support
  */
 
-import { type FC, useState } from 'react';
+import { type FC, useState, memo } from 'react';
 import type { CrowdZoneReading } from '@stadiumops/shared';
 import { useI18n } from '../context/I18nContext.js';
 
@@ -18,112 +18,109 @@ interface CrowdZoneCardProps {
   history?: number[] | undefined;
 }
 
-export const CrowdZoneCard: FC<CrowdZoneCardProps> = ({
-  reading,
-  zoneName,
-  zoneCapacity,
-  history = [],
-}) => {
-  const { t } = useI18n();
-  const [expanded, setExpanded] = useState(false);
+export const CrowdZoneCard: FC<CrowdZoneCardProps> = memo(
+  ({ reading, zoneName, zoneCapacity, history = [] }) => {
+    const { t } = useI18n();
+    const [expanded, setExpanded] = useState(false);
 
-  const densityPercent = Math.round(reading.densityRatio * 100);
-  const levelKey = `crowd.level.${reading.level}` as const;
-  const updatedAt = new Date(reading.updatedAt);
+    const densityPercent = Math.round(reading.densityRatio * 100);
+    const levelKey = `crowd.level.${reading.level}` as const;
+    const updatedAt = new Date(reading.updatedAt);
 
-  // Compute trend from last 3 readings
-  const trend = computeTrend(history);
-  const trendIcon = trend === 'rising' ? '↑' : trend === 'falling' ? '↓' : '→';
-  const trendLabel = trend === 'rising' ? 'Rising' : trend === 'falling' ? 'Falling' : 'Stable';
+    // Compute trend from last 3 readings
+    const trend = computeTrend(history);
+    const trendIcon = trend === 'rising' ? '↑' : trend === 'falling' ? '↓' : '→';
+    const trendLabel = trend === 'rising' ? 'Rising' : trend === 'falling' ? 'Falling' : 'Stable';
 
-  // Build sparkline SVG points
-  const sparklinePoints =
-    history.length > 1
-      ? history
-          .map((v, i) => `${String((i / (history.length - 1)) * 100)},${String(20 - v * 18)}`)
-          .join(' ')
-      : '';
+    // Build sparkline SVG points
+    const sparklinePoints =
+      history.length > 1
+        ? history
+            .map((v, i) => `${String((i / (history.length - 1)) * 100)},${String(20 - v * 18)}`)
+            .join(' ')
+        : '';
 
-  return (
-    <article
-      className={`zone-card zone-card--${reading.level} ${expanded ? 'zone-card--expanded' : ''}`}
-      aria-label={`${zoneName} — ${String(densityPercent)}% capacity, ${t(levelKey)}`}
-      role="button"
-      tabIndex={0}
-      onClick={() => {
-        setExpanded(!expanded);
-      }}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
+    return (
+      <article
+        className={`zone-card zone-card--${reading.level} ${expanded ? 'zone-card--expanded' : ''}`}
+        aria-label={`${zoneName} — ${String(densityPercent)}% capacity, ${t(levelKey)}`}
+        role="button"
+        tabIndex={0}
+        onClick={() => {
           setExpanded(!expanded);
-        }
-      }}
-    >
-      <header className="zone-card-header">
-        <h3 className="zone-name">{zoneName}</h3>
-        <span
-          className={`zone-badge zone-badge--${reading.level}`}
-          role="status"
-          aria-live="polite"
-        >
-          {t(levelKey)}
-        </span>
-      </header>
-
-      <div className="zone-stats">
-        <div className="zone-stat">
-          <span className="zone-stat-label">{t('crowd.count')}</span>
-          <span className="zone-stat-value">{reading.count.toLocaleString()}</span>
-        </div>
-        <div className="zone-stat">
-          <span className="zone-stat-label">{t('crowd.capacity')}</span>
-          <span className="zone-stat-value">{zoneCapacity.toLocaleString()}</span>
-        </div>
-        <div className="zone-stat">
-          <span className="zone-stat-label">{t('crowd.trend')}</span>
-          <span className="zone-stat-value" aria-label={trendLabel}>
-            {trendIcon}
-          </span>
-        </div>
-      </div>
-
-      <div
-        className="zone-density-bar"
-        role="progressbar"
-        aria-valuenow={densityPercent}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-label={`${zoneName} density`}
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setExpanded(!expanded);
+          }
+        }}
       >
-        <div
-          className={`zone-density-fill zone-density-fill--${reading.level}`}
-          style={{ width: `${String(densityPercent)}%` }}
-        />
-      </div>
+        <header className="zone-card-header">
+          <h3 className="zone-name">{zoneName}</h3>
+          <span
+            className={`zone-badge zone-badge--${reading.level}`}
+            role="status"
+            aria-live="polite"
+          >
+            {t(levelKey)}
+          </span>
+        </header>
 
-      {expanded && history.length > 1 && (
-        <div className="zone-sparkline" aria-label="Density trend (last 10 readings)">
-          <svg width="100" height="24" viewBox="0 0 100 24" className="sparkline-svg">
-            <polyline
-              points={sparklinePoints}
-              fill="none"
-              stroke={getTrendColor(trend)}
-              strokeWidth="2"
-              strokeLinejoin="round"
-              strokeLinecap="round"
-            />
-          </svg>
-          <span className="sparkline-label">Last {String(history.length)} readings</span>
+        <div className="zone-stats">
+          <div className="zone-stat">
+            <span className="zone-stat-label">{t('crowd.count')}</span>
+            <span className="zone-stat-value">{reading.count.toLocaleString()}</span>
+          </div>
+          <div className="zone-stat">
+            <span className="zone-stat-label">{t('crowd.capacity')}</span>
+            <span className="zone-stat-value">{zoneCapacity.toLocaleString()}</span>
+          </div>
+          <div className="zone-stat">
+            <span className="zone-stat-label">{t('crowd.trend')}</span>
+            <span className="zone-stat-value" aria-label={trendLabel}>
+              {trendIcon}
+            </span>
+          </div>
         </div>
-      )}
 
-      <p className="zone-updated">
-        {t('crowd.updated')}: {updatedAt.toLocaleTimeString()}
-      </p>
-    </article>
-  );
-};
+        <div
+          className="zone-density-bar"
+          role="progressbar"
+          aria-valuenow={densityPercent}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label={`${zoneName} density`}
+        >
+          <div
+            className={`zone-density-fill zone-density-fill--${reading.level}`}
+            style={{ width: `${String(densityPercent)}%` }}
+          />
+        </div>
+
+        {expanded && history.length > 1 && (
+          <div className="zone-sparkline" aria-label="Density trend (last 10 readings)">
+            <svg width="100" height="24" viewBox="0 0 100 24" className="sparkline-svg">
+              <polyline
+                points={sparklinePoints}
+                fill="none"
+                stroke={getTrendColor(trend)}
+                strokeWidth="2"
+                strokeLinejoin="round"
+                strokeLinecap="round"
+              />
+            </svg>
+            <span className="sparkline-label">Last {String(history.length)} readings</span>
+          </div>
+        )}
+
+        <p className="zone-updated">
+          {t('crowd.updated')}: {updatedAt.toLocaleTimeString()}
+        </p>
+      </article>
+    );
+  },
+);
 
 function computeTrend(history: number[]): 'rising' | 'falling' | 'stable' {
   if (history.length < 3) return 'stable';

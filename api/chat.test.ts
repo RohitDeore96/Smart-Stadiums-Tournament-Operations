@@ -42,6 +42,16 @@ vi.mock('./_lib/rateLimit.js', () => ({
   checkRateLimit: () => ({ allowed: true, remaining: 29, resetAt: Date.now() + 60000 }),
 }));
 
+// Mock auth to always pass in tests
+vi.mock('./_lib/auth.js', () => ({
+  requireAuth: () => true,
+}));
+
+// Mock CSRF to always pass in tests
+vi.mock('./_lib/csrf.js', () => ({
+  verifyOrigin: () => true,
+}));
+
 // Import AFTER mocks are set up
 import chatModule from './chat.js';
 const handler = chatModule;

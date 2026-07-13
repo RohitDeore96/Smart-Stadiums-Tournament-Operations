@@ -39,7 +39,7 @@ StadiumOps AI is a GenAI-enabled platform that helps **volunteers** and **fans**
 | **Code Quality**  | TS `strict: true`, Zod at every API boundary, files ≤ 300 LOC, DRY shared types package             |
 | **Security**      | Input validation, 3-layer prompt-injection defense, strict Firestore rules, CSP + security headers  |
 | **Efficiency**    | SSE streaming for chat, LRU cache for repeat queries, code-split chunks, mock-data fallback         |
-| **Testing**       | Vitest unit tests (90 tests) covering safety, intent, prompt, schemas, env, health                  |
+| **Testing**       | Vitest unit tests (78 tests) covering safety, intent, prompt, schemas, env, health                  |
 | **Accessibility** | WCAG 2.1 AA — semantic HTML, ARIA, keyboard nav, 9 languages + RTL Arabic, `prefers-reduced-motion` |
 
 ## 🏗️ Monorepo layout
@@ -123,7 +123,7 @@ If Firebase env vars are not set, the app automatically falls back to **mock dat
 | `pnpm dev:web`              | Start frontend dev server (Vite on :5173)    |
 | `pnpm dev:api`              | Start Vercel dev server (:3000)              |
 | `pnpm build`                | Build all workspaces                         |
-| `pnpm test`                 | Run all unit + integration tests (90 tests)  |
+| `pnpm test`                 | Run all unit + integration tests (78 tests)  |
 | `pnpm lint`                 | ESLint across all workspaces (zero warnings) |
 | `pnpm typecheck`            | `tsc --noEmit` across all workspaces         |
 | `pnpm format`               | Prettier write                               |

@@ -31,6 +31,7 @@ export async function streamChat(
     headers: {
       'Content-Type': 'application/json',
       Accept: 'text/event-stream',
+      Authorization: 'Bearer stadiumops-demo-2026',
     },
     body: JSON.stringify(request),
   };

@@ -6,10 +6,13 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { requireAuth } from './_lib/auth.js';
 
 const MODELS_TO_TEST = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-flash-latest'];
 
-export default async function handler(_req: VercelRequest, res: VercelResponse): Promise<void> {
+export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
+  // Require auth — diagnostics exposes sensitive deployment info
+  if (!requireAuth(req, res)) return;
   const apiKey = process.env.GEMINI_API_KEY;
   const hasKey = Boolean(apiKey);
 

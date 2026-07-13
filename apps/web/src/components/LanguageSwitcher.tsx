@@ -81,7 +81,7 @@ export const LanguageSwitcher: FC = () => {
                 type="button"
                 className={`lang-option ${l.code === locale ? 'lang-option--selected' : ''}`}
                 onClick={() => {
-                  handleSelect(l.code);
+                  handleSelect(l.code as Locale);
                 }}
               >
                 <span className="lang-option-native">{l.nativeName}</span>

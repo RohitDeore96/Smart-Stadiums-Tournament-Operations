@@ -1,7 +1,6 @@
 # StadiumOps AI — Architecture
 
-> This document reflects the ACTUAL deployed architecture (Vercel serverless).
-> Previous versions described a Cloud Run topology that was migrated to Vercel.
+> This document describes the deployed Vercel serverless architecture.
 
 ## 1. High-level topology
 
