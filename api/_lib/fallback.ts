@@ -57,10 +57,10 @@ const FALLBACKS: Record<string, { en: string; es: string; fr: string; ar: string
 export function getFallbackReply(intent: string, locale: string): string {
   const intentKey = intent in FALLBACKS ? intent : 'unknown';
   const langKey = locale === 'es' ? 'es' : locale === 'fr' ? 'fr' : locale === 'ar' ? 'ar' : 'en';
-  const fallbackEntry = FALLBACKS[intentKey] ?? FALLBACKS['unknown'];
+  const fallbackEntry = FALLBACKS[intentKey] ?? FALLBACKS.unknown;
   return (
     fallbackEntry?.[langKey] ??
-    FALLBACKS['unknown']?.en ??
+    FALLBACKS.unknown?.en ??
     'AI service temporarily unavailable. Please try again.'
   );
 }
