@@ -1,5 +1,10 @@
 # Dependabot config — weekly security + version updates
 # Docs: https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+#
+# NOTE: We use GitHub's default "dependencies" label (exists on every repo by default).
+# Avoid custom labels like "deps" or "triage" — they must be created manually in
+# repo Settings → Labels, otherwise dependabot fails with the error:
+#   "The following labels could not be found: deps, triage."
 
 version: 2
 
@@ -13,7 +18,7 @@ updates:
       time: '06:00'
       timezone: 'Asia/Kolkata'
     open-pull-requests-limit: 5
-    labels: ['deps', 'triage']
+    labels: ['dependencies']
     commit-message:
       prefix: 'chore(deps)'
     groups:
@@ -33,7 +38,7 @@ updates:
     schedule:
       interval: 'weekly'
     open-pull-requests-limit: 5
-    labels: ['deps', 'triage', 'api']
+    labels: ['dependencies']
     commit-message:
       prefix: 'chore(api-deps)'
 
@@ -43,7 +48,7 @@ updates:
     schedule:
       interval: 'weekly'
     open-pull-requests-limit: 5
-    labels: ['deps', 'triage', 'web']
+    labels: ['dependencies']
     commit-message:
       prefix: 'chore(web-deps)'
 
@@ -53,7 +58,7 @@ updates:
     schedule:
       interval: 'weekly'
     open-pull-requests-limit: 3
-    labels: ['deps', 'triage', 'shared']
+    labels: ['dependencies']
     commit-message:
       prefix: 'chore(shared-deps)'
 
@@ -62,7 +67,7 @@ updates:
     directory: '/'
     schedule:
       interval: 'weekly'
-    labels: ['deps', 'ci']
+    labels: ['dependencies']
     commit-message:
       prefix: 'chore(ci-deps)'
 
@@ -71,6 +76,6 @@ updates:
     directory: '/apps/api'
     schedule:
       interval: 'weekly'
-    labels: ['deps', 'api']
+    labels: ['dependencies']
     commit-message:
       prefix: 'chore(docker-deps)'
