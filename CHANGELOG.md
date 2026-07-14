@@ -32,7 +32,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - WCAG 2.1 AA: skip link, ARIA live, keyboard nav, reduced-motion
 - Strict Firestore rules (auth required for all reads/writes)
 - CSP + HSTS + security headers on all routes
-- 82 unit tests (safety, intent, prompt, schema, chat, app)
+- 86 unit tests (safety, intent, prompt, schema, chat, app)
 
 ### Changed
 

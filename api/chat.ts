@@ -55,7 +55,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ??
     req.socket?.remoteAddress ??
     'unknown';
-  const rateLimit = checkRateLimit(clientIp);
+  const rateLimit = await checkRateLimit(clientIp);
   if (!rateLimit.allowed) {
     res.setHeader('Retry-After', String(Math.ceil((rateLimit.resetAt - Date.now()) / 1000)));
     res

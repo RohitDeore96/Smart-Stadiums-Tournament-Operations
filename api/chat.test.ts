@@ -39,7 +39,8 @@ vi.mock('./_lib/intent.js', () => ({
 
 // Mock the rate limiter to always allow in tests
 vi.mock('./_lib/rateLimit.js', () => ({
-  checkRateLimit: () => ({ allowed: true, remaining: 29, resetAt: Date.now() + 60000 }),
+  checkRateLimit: () =>
+    Promise.resolve({ allowed: true, remaining: 29, resetAt: Date.now() + 60000 }),
 }));
 
 // Mock auth to always pass in tests

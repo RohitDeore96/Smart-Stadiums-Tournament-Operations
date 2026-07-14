@@ -124,7 +124,12 @@ async function callGeminiModel(
   const requestBody = {
     system_instruction: { parts: [{ text: systemPrompt }] },
     contents,
-    generationConfig: { temperature: 0.3, topP: 0.9, maxOutputTokens: 500 },
+    generationConfig: {
+      temperature: 0.3,
+      topP: 0.9,
+      maxOutputTokens: 500,
+      responseMimeType: 'text/plain',
+    },
     safetySettings: [
       { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
       { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
@@ -222,7 +227,12 @@ async function* callGeminiModelStream(
   const requestBody = {
     system_instruction: { parts: [{ text: systemPrompt }] },
     contents,
-    generationConfig: { temperature: 0.3, topP: 0.9, maxOutputTokens: 500 },
+    generationConfig: {
+      temperature: 0.3,
+      topP: 0.9,
+      maxOutputTokens: 500,
+      responseMimeType: 'text/plain',
+    },
     safetySettings: [
       { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
       { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
