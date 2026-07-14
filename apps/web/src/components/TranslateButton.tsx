@@ -52,6 +52,18 @@ export const TranslateButton: FC<TranslateButtonProps> = ({ originalText, origin
     setIsOpen(false);
     setShowOriginal(false);
 
+    // Check translation cache first (keyed by text + targetLocale)
+    const cacheKey = `stadiumops-translation-${locale}-${originalText.slice(0, 100)}`;
+    try {
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        setTranslatedText(cached);
+        return;
+      }
+    } catch {
+      // localStorage unavailable
+    }
+
     try {
       let translation = '';
       await streamChat(
@@ -65,7 +77,14 @@ export const TranslateButton: FC<TranslateButtonProps> = ({ originalText, origin
           }
         },
       );
-      setTranslatedText(translation || 'Translation unavailable');
+      const result = translation || 'Translation unavailable';
+      setTranslatedText(result);
+      // Cache the translation
+      try {
+        localStorage.setItem(cacheKey, result);
+      } catch {
+        // Cache full — ignore
+      }
     } catch {
       setTranslatedText('Translation failed — please try again');
     } finally {

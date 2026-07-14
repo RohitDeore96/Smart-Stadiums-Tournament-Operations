@@ -201,6 +201,7 @@ async function* callGeminiModelStream(
   model: string,
   systemPrompt: string,
   userMessage: string,
+  history?: { role: 'user' | 'model'; text: string }[],
 ): AsyncGenerator<{ chunk: string; tokenUsage?: TokenUsage }> {
   const apiKey = getApiKey();
 
@@ -208,10 +209,19 @@ async function* callGeminiModelStream(
     throw new GeminiModelError(400, 'Invalid key format', model);
   }
 
+  // Build contents array with conversation history (same as non-streaming path)
+  const contents: { role: string; parts: { text: string }[] }[] = [];
+  if (history && history.length > 0) {
+    for (const turn of history.slice(-5)) {
+      contents.push({ role: turn.role, parts: [{ text: turn.text }] });
+    }
+  }
+  contents.push({ role: 'user', parts: [{ text: userMessage }] });
+
   const endpoint = `${API_BASE}/${model}:streamGenerateContent?alt=sse`;
   const requestBody = {
     system_instruction: { parts: [{ text: systemPrompt }] },
-    contents: [{ parts: [{ text: userMessage }] }],
+    contents,
     generationConfig: { temperature: 0.3, topP: 0.9, maxOutputTokens: 500 },
     safetySettings: [
       { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
@@ -410,7 +420,12 @@ export async function* streamReply(req: GeminiRequest): AsyncGenerator<{
       let finalTokenUsage: TokenUsage = { promptTokens: 0, completionTokens: 0, totalTokens: 0 };
       let gotAnyChunk = false;
 
-      for await (const result of callGeminiModelStream(model, systemPrompt, wrappedUserMessage)) {
+      for await (const result of callGeminiModelStream(
+        model,
+        systemPrompt,
+        wrappedUserMessage,
+        req.history,
+      )) {
         if (result.chunk) {
           fullText += result.chunk;
           gotAnyChunk = true;

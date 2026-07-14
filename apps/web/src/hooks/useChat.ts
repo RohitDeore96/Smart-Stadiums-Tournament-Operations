@@ -42,9 +42,15 @@ export function useChat(options: UseChatOptions): UseChatReturn {
     try {
       const stored = localStorage.getItem('stadiumops-chat-history');
       if (stored) {
-        const parsed = JSON.parse(stored) as ChatMessage[];
-        // Only load last 20 messages to prevent unbounded growth
-        return parsed.slice(-20);
+        const parsed = JSON.parse(stored) as
+          { version?: number; messages?: ChatMessage[] } | ChatMessage[];
+        // Schema versioning: support both v1 (array) and v2 ({version, messages})
+        const msgArray = Array.isArray(parsed)
+          ? parsed
+          : (parsed as { messages?: ChatMessage[] })?.messages;
+        if (Array.isArray(msgArray)) {
+          return msgArray.slice(-20);
+        }
       }
     } catch {
       // Ignore parse errors
@@ -58,9 +64,12 @@ export function useChat(options: UseChatOptions): UseChatReturn {
   // Persist messages to localStorage whenever they change
   useEffect(() => {
     try {
-      // Only persist non-streaming messages (skip empty assistant placeholders)
       const toSave = messages.filter((m) => m.content.length > 0).slice(-20);
-      localStorage.setItem('stadiumops-chat-history', JSON.stringify(toSave));
+      // Versioned schema for forward compatibility
+      localStorage.setItem(
+        'stadiumops-chat-history',
+        JSON.stringify({ version: 1, messages: toSave }),
+      );
     } catch {
       // localStorage might be full or unavailable
     }

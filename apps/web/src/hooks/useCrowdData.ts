@@ -26,6 +26,7 @@ export function useCrowdData(): UseCrowdDataReturn {
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const historyRef = useRef<Record<string, number[]>>({});
+  const readingsRef = useRef<CrowdZoneReading[]>([]);
   const [history, setHistory] = useState<Record<string, number[]>>({});
 
   useEffect(() => {
@@ -37,6 +38,24 @@ export function useCrowdData(): UseCrowdDataReturn {
       if (unsubscribe) return; // already subscribed
       unsubscribe = subscribeToCrowdData((newReadings) => {
         if (!mounted || isPaused) return;
+
+        // Shallow equality check — skip setState if readings haven't changed
+        const prevReadings = readingsRef.current;
+        if (
+          prevReadings.length === newReadings.length &&
+          prevReadings.every((prev, i) => {
+            const next = newReadings[i] ?? null;
+            return (
+              next !== null &&
+              prev.zoneId === next.zoneId &&
+              prev.densityRatio === next.densityRatio
+            );
+          })
+        ) {
+          return; // No meaningful change — skip re-render
+        }
+
+        readingsRef.current = newReadings;
         setReadings(newReadings);
         setIsLoading(false);
         setError(null);

@@ -56,7 +56,7 @@ export const IncidentCard: FC<IncidentCardProps> = ({ incident }) => {
         {incident.assignedResponderUid && (
           <span className="incident-assignee">
             <span aria-hidden="true">👤</span>
-            {t('incidents.status.in_progress')}
+            Assigned: {incident.assignedResponderUid}
           </span>
         )}
         <time

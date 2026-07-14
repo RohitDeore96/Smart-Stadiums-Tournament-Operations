@@ -20,6 +20,12 @@ export const Layout: FC<LayoutProps> = ({ children, activePath }) => {
       <a href="#main-content" className="skip-link">
         Skip to main content
       </a>
+      <div
+        id="language-announcement"
+        className="language-announcement"
+        role="status"
+        aria-live="polite"
+      />
       <Header />
       <Navigation activePath={activePath} />
       <main id="main-content" tabIndex={-1} className="main-content">

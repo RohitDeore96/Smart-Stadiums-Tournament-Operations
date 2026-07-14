@@ -1641,3 +1641,55 @@ body {
 .dashboard-widgets {
   margin-top: var(--space-6);
 }
+
+/* ---- High contrast mode (WCAG 2.1 AAA) ---- */
+@media (prefers-contrast: more) {
+  :root {
+    --color-bg: #000000;
+    --color-bg-elevated: #0a0a0a;
+    --color-bg-card: #111111;
+    --color-border: #ffffff;
+    --color-text: #ffffff;
+    --color-text-muted: #cccccc;
+    --color-primary: #00ffff;
+  }
+
+  .zone-card,
+  .stat-card,
+  .incident-card,
+  .sentiment-widget,
+  .chat-panel,
+  .incident-form-section {
+    border-width: 2px;
+  }
+
+  .zone-density-bar {
+    height: 12px;
+    border: 1px solid #ffffff;
+  }
+}
+
+/* ---- Touch target minimum (WCAG 2.5.5: 44×44 CSS px) ---- */
+.voice-button,
+.message-action-btn,
+.suggested-action,
+.lang-option {
+  min-height: 44px;
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ---- ARIA live region for language change announcements ---- */
+.language-announcement {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

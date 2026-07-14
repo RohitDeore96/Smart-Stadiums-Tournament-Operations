@@ -50,11 +50,18 @@ export const I18nProvider: FC<I18nProviderProps> = ({ children }) => {
     localStorage.setItem(STORAGE_KEY, newLocale);
   };
 
-  // Update document attributes when locale changes
+  // Update document attributes when locale changes + announce to screen readers
   useEffect(() => {
     document.documentElement.lang = locale;
     const isRTL = locale === 'ar';
     document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
+
+    // Announce language change to screen readers
+    const announcement = document.getElementById('language-announcement');
+    if (announcement) {
+      const localeName = SUPPORTED_LOCALES.find((l) => l.code === locale)?.nativeName ?? locale;
+      announcement.textContent = `Language changed to ${localeName}`;
+    }
   }, [locale]);
 
   const t = (key: TranslationKey): string => {
