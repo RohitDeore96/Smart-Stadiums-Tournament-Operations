@@ -94,3 +94,27 @@ Before requesting review, confirm:
 - We use semantic versioning (`v0.1.0` → `v0.1.1` for patch, `v0.2.0` for minor, `v1.0.0` for major)
 - Releases are tagged on `main` after CI passes
 - Cloud Run + Firebase Hosting deploy automatically on push to `main`
+
+## Branch protection
+
+- `main` is protected — direct pushes are not allowed
+- All changes go through PR with at least 1 CODEOWNER review
+- CI must pass (lint + typecheck + test + build) before merge
+- Squash-and-merge strategy is used for clean commit history
+
+## Rollback strategy
+
+- Vercel supports instant rollback via the dashboard or CLI:
+  ```bash
+  vercel rollback [deployment-url]
+  ```
+- Every push to `main` creates a new deployment; previous deployments remain available
+- To rollback: go to Vercel → Deployments → find the last known-good deployment → click "Promote to Production"
+- Document the rollback reason in the GitHub issue tracker
+
+## PR review process
+
+- PRs require approval from at least one CODEOWNER
+- CI must pass (format-check + lint + typecheck + test + build + security audit)
+- Conventional commits are enforced (feat, fix, docs, refactor, test, chore)
+- Squash-and-merge is the default merge strategy

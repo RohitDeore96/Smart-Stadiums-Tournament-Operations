@@ -106,6 +106,16 @@ export interface IntentResult {
 }
 
 /**
+ * Confidence thresholds based on pattern-match count.
+ * Calibrated empirically: 1 match = plausible, 2 = likely, 3+ = confident.
+ */
+const CONFIDENCE_THRESHOLDS = {
+  SINGLE_MATCH: 0.6,
+  DOUBLE_MATCH: 0.85,
+  TRIPLE_PLUS: 0.95,
+} as const;
+
+/**
  * Classifies the user message into a ChatIntent.
  * Returns `unknown` if no patterns match — caller lets Gemini handle it.
  */
@@ -129,8 +139,12 @@ export function classifyIntent(message: string): IntentResult {
     return { intent: 'unknown', confidence: 0 };
   }
 
-  // Confidence: 1 pattern = 0.6, 2 patterns = 0.85, 3+ = 0.95
-  const confidence = bestMatch.count >= 3 ? 0.95 : bestMatch.count === 2 ? 0.85 : 0.6;
+  const confidence =
+    bestMatch.count >= 3
+      ? CONFIDENCE_THRESHOLDS.TRIPLE_PLUS
+      : bestMatch.count === 2
+        ? CONFIDENCE_THRESHOLDS.DOUBLE_MATCH
+        : CONFIDENCE_THRESHOLDS.SINGLE_MATCH;
 
   return { intent: bestMatch.intent, confidence };
 }
