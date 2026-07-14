@@ -17,7 +17,7 @@ type EscalationFilter = 'all' | 'pending' | 'acknowledged' | 'assigned' | 'resol
 
 export const VenueStaffPage: FC = () => {
   const { t } = useI18n();
-  const { incidents, isLoading, update, refresh } = useIncidents();
+  const { incidents, isLoading, update } = useIncidents();
   const [filter, setFilter] = useState<EscalationFilter>('all');
 
   const filteredIncidents = incidents.filter((inc) => {
@@ -112,7 +112,9 @@ export const VenueStaffPage: FC = () => {
                 key={f}
                 type="button"
                 className={`btn ${filter === f ? 'btn-primary' : 'btn-secondary'}`}
-                onClick={() => setFilter(f)}
+                onClick={() => {
+                  setFilter(f);
+                }}
                 aria-pressed={filter === f}
               >
                 {f === 'all'
