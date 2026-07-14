@@ -52,6 +52,18 @@ vi.mock('./_lib/csrf.js', () => ({
   verifyOrigin: () => true,
 }));
 
+// Mock logger to avoid noise in test output
+vi.mock('./_lib/logger.js', () => ({
+  logger: {
+    info: () => {},
+    debug: () => {},
+    warn: () => {},
+    error: () => {},
+  },
+  generateRequestId: () => 'test-req-id',
+  setRequestId: () => {},
+}));
+
 // Import AFTER mocks are set up
 import chatModule from './chat.js';
 const handler = chatModule;

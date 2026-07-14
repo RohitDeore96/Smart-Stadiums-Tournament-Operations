@@ -22,12 +22,6 @@ const SENTIMENT_ICONS: Record<Sentiment, string> = {
   sad: '😟',
 };
 
-const SENTIMENT_COLORS: Record<Sentiment, string> = {
-  happy: '#4ade80',
-  neutral: '#fbbf24',
-  sad: '#f87171',
-};
-
 export const FanSentimentWidget: FC = () => {
   const [votes, setVotes] = useState<VoteCounts>({ happy: 12, neutral: 5, sad: 2 });
   const [userVoted, setUserVoted] = useState<Sentiment | null>(null);
@@ -115,11 +109,8 @@ export const FanSentimentWidget: FC = () => {
               aria-label={`${s}: ${String(percentages[s])}%`}
             >
               <div
-                className="sentiment-bar-fill"
-                style={{
-                  width: `${String(percentages[s])}%`,
-                  backgroundColor: SENTIMENT_COLORS[s],
-                }}
+                className={`sentiment-bar-fill sentiment-bar-fill--${s}`}
+                style={{ width: `${String(percentages[s])}%` }}
               />
             </div>
             <span className="sentiment-bar-percent">{String(percentages[s])}%</span>

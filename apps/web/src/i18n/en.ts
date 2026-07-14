@@ -12,6 +12,7 @@ const en: Translations = {
   'nav.chat': 'Assistant',
   'nav.incidents': 'Incidents',
   'nav.announcements': 'Announcements',
+  'nav.venueStaff': 'Venue Staff',
   'nav.language': 'Language',
   'nav.skipToMain': 'Skip to main content',
   'dashboard.title': 'Operations Dashboard',

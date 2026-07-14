@@ -212,19 +212,19 @@ export const StadiumMap: FC<StadiumMapProps> = ({ readings, highlightedZoneId, o
       {/* Legend */}
       <div className="stadium-map-legend" role="list" aria-label="Crowd density legend">
         <span className="legend-item" role="listitem">
-          <span className="legend-dot" style={{ backgroundColor: '#4ade80' }} aria-hidden="true" />
+          <span className="legend-dot legend-dot--low" aria-hidden="true" />
           {t('crowd.level.low')}
         </span>
         <span className="legend-item" role="listitem">
-          <span className="legend-dot" style={{ backgroundColor: '#fbbf24' }} aria-hidden="true" />
+          <span className="legend-dot legend-dot--moderate" aria-hidden="true" />
           {t('crowd.level.moderate')}
         </span>
         <span className="legend-item" role="listitem">
-          <span className="legend-dot" style={{ backgroundColor: '#fb923c' }} aria-hidden="true" />
+          <span className="legend-dot legend-dot--high" aria-hidden="true" />
           {t('crowd.level.high')}
         </span>
         <span className="legend-item" role="listitem">
-          <span className="legend-dot" style={{ backgroundColor: '#ef4444' }} aria-hidden="true" />
+          <span className="legend-dot legend-dot--critical" aria-hidden="true" />
           {t('crowd.level.critical')}
         </span>
       </div>

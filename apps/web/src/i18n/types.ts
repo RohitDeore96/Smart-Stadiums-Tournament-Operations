@@ -10,6 +10,7 @@ export type TranslationKey =
   | 'nav.chat'
   | 'nav.incidents'
   | 'nav.announcements'
+  | 'nav.venueStaff'
   | 'nav.language'
   | 'nav.skipToMain'
   | 'dashboard.title'

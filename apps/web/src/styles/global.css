@@ -1693,3 +1693,44 @@ body {
   white-space: nowrap;
   border: 0;
 }
+
+/* ---- Legend dot color classes (replaces inline styles) ---- */
+.legend-dot--low { background-color: #4ade80; }
+.legend-dot--moderate { background-color: #fbbf24; }
+.legend-dot--high { background-color: #fb923c; }
+.legend-dot--critical { background-color: #ef4444; }
+
+/* ---- Sentiment bar fill classes (replaces inline styles) ---- */
+.sentiment-bar-fill--happy { background-color: #4ade80; }
+.sentiment-bar-fill--neutral { background-color: #fbbf24; }
+.sentiment-bar-fill--sad { background-color: #f87171; }
+
+/* ---- Forced colors mode (Windows High Contrast) ---- */
+@media (forced-colors: active) {
+  .zone-rect { forced-color-adjust: none; }
+  .legend-dot--low,
+  .legend-dot--moderate,
+  .legend-dot--high,
+  .legend-dot--critical { forced-color-adjust: none; }
+}
+
+/* ---- Venue Staff Page ---- */
+.filter-buttons {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.incident-with-actions {
+  margin-bottom: var(--space-4);
+}
+
+.escalation-actions {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  background-color: var(--color-bg-elevated);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  border-top: 1px solid var(--color-border);
+}

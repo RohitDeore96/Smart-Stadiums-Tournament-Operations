@@ -15,6 +15,7 @@
  */
 
 import { z } from 'zod';
+import type { SuggestedAction } from './actions.js';
 
 const LOCALES = ['en', 'es', 'fr', 'ar', 'de', 'pt', 'ja', 'ko', 'zh'] as const;
 
@@ -66,11 +67,7 @@ export type ChatStreamEvent =
       type: 'metadata';
       intent: string;
       confidence: number;
-      suggestedActions: {
-        type: string;
-        label: string;
-        payload: Record<string, unknown>;
-      }[];
+      suggestedActions: SuggestedAction[];
       emergencyEscalated: boolean;
     }
   | {

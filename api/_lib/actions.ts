@@ -1,14 +1,16 @@
 /**
  * @file api/_lib/actions.ts
  * @description Suggested action generator based on detected intent.
+ *   Uses a discriminated union for type-safe action rendering.
  *   Extracted from chat.ts to keep it under 300 LOC.
  */
 
-export interface SuggestedAction {
-  type: string;
-  label: string;
-  payload: Record<string, unknown>;
-}
+export type SuggestedAction =
+  | { type: 'show_route'; label: string; payload: Record<string, never> }
+  | { type: 'open_map'; label: string; payload: Record<string, never> }
+  | { type: 'file_incident'; label: string; payload: { category: string } }
+  | { type: 'view_crowd'; label: string; payload: Record<string, never> }
+  | { type: 'translate'; label: string; payload: Record<string, never> };
 
 /**
  * Returns suggested UI actions based on detected intent.

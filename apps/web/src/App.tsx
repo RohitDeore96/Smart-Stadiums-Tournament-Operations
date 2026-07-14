@@ -22,6 +22,9 @@ const IncidentsPage = lazy(() =>
 const AnnouncementsPage = lazy(() =>
   import('./pages/AnnouncementsPage.js').then((m) => ({ default: m.AnnouncementsPage })),
 );
+const VenueStaffPage = lazy(() =>
+  import('./pages/VenueStaffPage.js').then((m) => ({ default: m.VenueStaffPage })),
+);
 
 function PageLoader(): ReactElement {
   return (
@@ -53,6 +56,7 @@ const RouteTracker: FC = () => {
             <Route path="/chat" element={<ChatPage />} />
             <Route path="/incidents" element={<IncidentsPage />} />
             <Route path="/announcements" element={<AnnouncementsPage />} />
+            <Route path="/venue-staff" element={<VenueStaffPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>

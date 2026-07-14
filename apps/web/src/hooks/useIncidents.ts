@@ -5,14 +5,20 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import type { IncidentCreateInput } from '@stadiumops/shared';
-import { getIncidents, createIncident, type Incident } from '../services/incidentService.js';
+import type { IncidentCreateInput, IncidentUpdateInput } from '@stadiumops/shared';
+import {
+  getIncidents,
+  createIncident,
+  updateIncident,
+  type Incident,
+} from '../services/incidentService.js';
 
 interface UseIncidentsReturn {
   incidents: Incident[];
   isLoading: boolean;
   error: string | null;
   create: (input: IncidentCreateInput) => Promise<Incident>;
+  update: (id: string, input: IncidentUpdateInput) => Promise<Incident | null>;
   refresh: () => Promise<void>;
 }
 
@@ -40,6 +46,17 @@ export function useIncidents(): UseIncidentsReturn {
     return incident;
   }, []);
 
+  const update = useCallback(
+    async (id: string, input: IncidentUpdateInput): Promise<Incident | null> => {
+      const updated = await updateIncident(id, input);
+      if (updated) {
+        setIncidents((prev) => prev.map((i) => (i.id === id ? updated : i)));
+      }
+      return updated;
+    },
+    [],
+  );
+
   useEffect(() => {
     void refresh();
 
@@ -58,6 +75,7 @@ export function useIncidents(): UseIncidentsReturn {
     isLoading,
     error,
     create,
+    update,
     refresh,
   };
 }

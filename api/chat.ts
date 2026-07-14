@@ -23,12 +23,18 @@ import { suggestActions } from './_lib/actions.js';
 import { getFallbackReply } from './_lib/fallback.js';
 import { requireAuth } from './_lib/auth.js';
 import { verifyOrigin } from './_lib/csrf.js';
+import { logger, generateRequestId, setRequestId } from './_lib/logger.js';
 
 export const config = {
   maxDuration: 30,
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
+  // Generate request ID for tracing
+  const requestId = generateRequestId();
+  setRequestId(requestId);
+  logger.info('Chat request received', { method: req.method });
+
   // Method check
   if (req.method !== 'POST') {
     res.status(405).json({
@@ -135,10 +141,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
         }
       }
     } catch (geminiErr: unknown) {
-      console.error(
-        '[chat] Gemini failed, using fallback:',
-        geminiErr instanceof Error ? geminiErr.message : 'Unknown',
-      );
+      logger.error('Gemini failed, using fallback', {
+        error: geminiErr instanceof Error ? geminiErr.message : 'Unknown',
+        intent: intentResult.intent,
+      });
       sendEvent({ type: 'token', value: getFallbackReply(intentResult.intent, body.locale) });
     }
 
@@ -152,7 +158,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     sendEvent({ type: 'done', messageId: `msg_${String(Date.now())}`, tokenUsage });
     res.end();
   } catch (err: unknown) {
-    console.error('[chat] Handler failed:', err instanceof Error ? err.message : 'Unknown');
+    logger.error('Handler failed', { error: err instanceof Error ? err.message : 'Unknown' });
     sendEvent({ type: 'error', code: 'INTERNAL_ERROR', message: 'Failed to generate reply.' });
     res.end();
   }
