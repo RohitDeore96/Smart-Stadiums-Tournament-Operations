@@ -20,7 +20,7 @@ import { incidentStore } from './_lib/store.js';
 
 export const config = { maxDuration: 30 };
 
-const MODEL_NAMES = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-flash-latest'];
+const MODEL_NAMES = ['gemini-flash-latest', 'gemini-2.5-flash-preview', 'gemini-2.0-flash'];
 const API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 
 const SentimentInputSchema = z.object({

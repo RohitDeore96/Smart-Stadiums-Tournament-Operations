@@ -11,7 +11,7 @@
  *     2. Send to Gemini with inlineData + a vision-specific prompt
  *     3. Return structured JSON: { category, severity, description, confidence }
  *
- *   The model used is gemini-2.5-flash / 2.0-flash (both support vision).
+ *   The model used is gemini-flash-latest (resolves to newest flash model with vision support).
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
@@ -22,7 +22,7 @@ import { logger, generateRequestId, setRequestId } from './_lib/logger.js';
 
 export const config = { maxDuration: 30 };
 
-const MODEL_NAMES = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-flash-latest'];
+const MODEL_NAMES = ['gemini-flash-latest', 'gemini-2.5-flash-preview', 'gemini-2.0-flash'];
 const API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 const MAX_IMAGE_BYTES = 4_000_000; // 4MB cap
 

@@ -8,7 +8,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { requireAuth } from './_lib/auth.js';
 
-const MODELS_TO_TEST = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-flash-latest'];
+const MODELS_TO_TEST = ['gemini-flash-latest', 'gemini-2.5-flash-preview', 'gemini-2.0-flash'];
 
 export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   // Require auth — diagnostics exposes sensitive deployment info
@@ -168,6 +168,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
           indiaDailyReset: '12:30 PM IST (DST) / 1:30 PM IST (standard)',
           models: {
             'gemini-2.0-flash': 'limit: 0 (NOT free in India)',
+            'gemini-2.5-flash': 'DEPRECATED — use gemini-flash-latest instead',
           },
           billingRequired: false,
           getKeyUrl: 'https://aistudio.google.com/app/apikey',

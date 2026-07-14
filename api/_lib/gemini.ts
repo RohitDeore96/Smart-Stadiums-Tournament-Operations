@@ -45,10 +45,11 @@ export interface GeminiReply {
   cached: boolean;
 }
 
-// Models ordered by free-tier availability in India (2026):
-// 3.x models have free tier (1500 RPD) but may need AIzaSy key format
-// 2.x models work with AQ. keys but have limit:0 in India
-const MODEL_NAMES = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-flash-latest'];
+// Models ordered by free-tier availability (2026):
+// gemini-flash-latest resolves to the newest flash model (currently 3.5-flash)
+// gemini-2.0-flash has limit:0 in India but works elsewhere
+// gemini-2.5-flash-preview is the fallback for regions where latest is unavailable
+const MODEL_NAMES = ['gemini-flash-latest', 'gemini-2.5-flash-preview', 'gemini-2.0-flash'];
 const API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 const MAX_RETRIES = 2;
 const RETRY_DELAY_MS = 500;
