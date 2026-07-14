@@ -24,6 +24,16 @@ vi.mock('./_lib/gemini.js', () => ({
       cached: false,
     };
   },
+  async *streamReplyWithTools() {
+    yield { chunk: 'Hello', done: false, cached: false };
+    yield { chunk: ' from tool mock', done: false, cached: false };
+    yield {
+      chunk: '',
+      done: true,
+      tokenUsage: { promptTokens: 10, completionTokens: 5, totalTokens: 15 },
+      cached: false,
+    };
+  },
   getCacheStats: () => ({ size: 0, ttl: 300000 }),
 }));
 
@@ -35,6 +45,7 @@ vi.mock('./_lib/safety.js', () => ({
 // Mock the intent service
 vi.mock('./_lib/intent.js', () => ({
   classifyIntent: () => ({ intent: 'wayfinding', confidence: 0.85 }),
+  isComplexQuery: () => false,
 }));
 
 // Mock the rate limiter to always allow in tests

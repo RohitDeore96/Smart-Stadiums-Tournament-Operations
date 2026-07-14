@@ -148,3 +148,26 @@ export function classifyIntent(message: string): IntentResult {
 
   return { intent: bestMatch.intent, confidence };
 }
+
+/**
+ * Detects "complex" queries that should trigger prompt chaining —
+ * queries that combine multiple intents (e.g. "What's the crowd like at
+ * Gate A and should I go there?"). These benefit from a 2-step chain:
+ *   1. Gather data via tool calls (crowd status, incident lookups)
+ *   2. Synthesize a recommendation using the gathered context
+ */
+export function isComplexQuery(message: string): boolean {
+  let intentHits = 0;
+  for (const { patterns } of INTENT_PATTERNS) {
+    for (const pattern of patterns) {
+      if (pattern.test(message)) {
+        intentHits++;
+        break; // one hit per intent category is enough
+      }
+    }
+  }
+  // 2+ distinct intent categories = complex query
+  // Also flag explicit "and" / "should I" patterns
+  const hasConjunction = /\b(?:and|also|should i|what about|plus)\b/i.test(message);
+  return intentHits >= 2 || (intentHits >= 1 && hasConjunction);
+}

@@ -17,6 +17,7 @@ import { StadiumMap } from '../components/StadiumMap.js';
 import { MatchTicker } from '../components/MatchTicker.js';
 import { AnnouncementsTicker } from '../components/AnnouncementsTicker.js';
 import { FanSentimentWidget } from '../components/FanSentimentWidget.js';
+import { findZonesPredictedCritical } from '../lib/predictCrush.js';
 
 export const DashboardPage: FC = () => {
   const { t } = useI18n();
@@ -31,6 +32,9 @@ export const DashboardPage: FC = () => {
     [readings],
   );
 
+  // Predictive crush analytics — flag zones predicted to go critical
+  const predictedCriticalZones = useMemo(() => findZonesPredictedCritical(history), [history]);
+
   // Next match (simulated — 4 hours from now)
   const nextKickoff = new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString();
 
@@ -39,6 +43,35 @@ export const DashboardPage: FC = () => {
       <MatchTicker homeTeam="Mexico" awayTeam="Canada" kickoffTimeUTC={nextKickoff} />
 
       <AnnouncementsTicker />
+
+      {predictedCriticalZones.length > 0 && (
+        <section
+          className="crush-alert-banner"
+          role="alert"
+          aria-live="assertive"
+          aria-label="Predicted crowd crush warning"
+        >
+          <h3 className="crush-alert-title">⚠ Predictive Crush Warning</h3>
+          <ul className="crush-alert-list">
+            {predictedCriticalZones.slice(0, 3).map(({ zoneId, prediction }) => {
+              const zone = stadium.zones.find((z) => z.id === zoneId);
+              return (
+                <li key={zoneId} className="crush-alert-item">
+                  <strong>{zone?.name ?? zoneId}</strong>: predicted critical in ~
+                  {String(Math.round(prediction.minutesToCritical ?? 0))} min
+                  <span className="crush-alert-confidence">
+                    {' '}
+                    (conf: {String(Math.round(prediction.confidence * 100))}%)
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+          <p className="crush-alert-action">
+            Consider redirecting fans or opening additional gates.
+          </p>
+        </section>
+      )}
 
       <section className="page-header">
         <h2 className="page-title">{t('dashboard.title')}</h2>

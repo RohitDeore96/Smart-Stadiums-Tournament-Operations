@@ -11,6 +11,12 @@
 import { LRUCache } from 'lru-cache';
 import { createHash } from 'node:crypto';
 import { buildSystemPrompt, wrapUserMessage, type SystemPromptContext } from './prompt.js';
+import {
+  TOOL_DECLARATIONS,
+  dispatchFunctionCall,
+  type FunctionCall,
+  type FunctionResult,
+} from './tools.js';
 
 const cache = new LRUCache<string, { text: string; tokenUsage: TokenUsage }>({
   max: 100,
@@ -67,7 +73,13 @@ function isValidAiStudioKey(key: string): boolean {
 
 interface GeminiResponseBody {
   candidates?: {
-    content?: { parts?: { text?: string }[] };
+    content?: {
+      parts?: {
+        text?: string;
+        functionCall?: { name: string; args?: Record<string, unknown> };
+      }[];
+    };
+    finishReason?: string;
   }[];
   usageMetadata?: {
     promptTokenCount?: number;
@@ -75,6 +87,17 @@ interface GeminiResponseBody {
     totalTokenCount?: number;
   };
   error?: { message?: string };
+}
+
+interface GeminiContentPart {
+  text?: string;
+  functionCall?: { name: string; args?: Record<string, unknown> };
+  functionResponse?: { name: string; response?: Record<string, unknown> };
+}
+
+interface GeminiContent {
+  role: string;
+  parts: GeminiContentPart[];
 }
 
 class GeminiModelError extends Error {
@@ -481,4 +504,234 @@ export async function* streamReply(req: GeminiRequest): AsyncGenerator<{
 
 export function getCacheStats(): { size: number; ttl: number } {
   return { size: cache.size, ttl: Number(process.env.GEMINI_CACHE_TTL_MS ?? 300_000) };
+}
+
+// ===========================================================================
+// FUNCTION CALLING SUPPORT
+// ===========================================================================
+
+const MAX_TOOL_ITERATIONS = 3;
+
+/**
+ * Calls Gemini with function declarations. Returns either text or a list of
+ * function calls the model wants to execute. Used to implement tool use.
+ */
+async function callGeminiWithTools(
+  model: string,
+  systemPrompt: string,
+  contents: GeminiContent[],
+): Promise<{
+  text: string;
+  functionCalls: FunctionCall[];
+  tokenUsage: TokenUsage;
+}> {
+  const apiKey = getApiKey();
+  const endpoint = `${API_BASE}/${model}:generateContent`;
+  const requestBody = {
+    system_instruction: { parts: [{ text: systemPrompt }] },
+    contents,
+    tools: [{ functionDeclarations: TOOL_DECLARATIONS }],
+    generationConfig: {
+      temperature: 0.3,
+      topP: 0.9,
+      maxOutputTokens: 800,
+    },
+    safetySettings: [
+      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+    ],
+  };
+
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+    body: JSON.stringify(requestBody),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    let errorMsg = `HTTP ${String(response.status)}`;
+    try {
+      const errorJson = JSON.parse(errorText) as { error?: { message?: string } };
+      if (errorJson.error?.message) errorMsg = errorJson.error.message;
+    } catch {
+      if (errorText) errorMsg = errorText.slice(0, 200);
+    }
+    throw new GeminiModelError(response.status, errorMsg, model);
+  }
+
+  const data = (await response.json()) as GeminiResponseBody;
+  if (data.error) {
+    throw new GeminiModelError(500, data.error.message ?? 'Unknown error', model);
+  }
+
+  const parts = data.candidates?.[0]?.content?.parts ?? [];
+  let text = '';
+  const functionCalls: FunctionCall[] = [];
+
+  for (const part of parts) {
+    if (part.text) text += part.text;
+    if (part.functionCall) {
+      functionCalls.push({
+        name: part.functionCall.name as FunctionCall['name'],
+        args: part.functionCall.args ?? {},
+      });
+    }
+  }
+
+  return {
+    text,
+    functionCalls,
+    tokenUsage: {
+      promptTokens: data.usageMetadata?.promptTokenCount ?? 0,
+      completionTokens: data.usageMetadata?.candidatesTokenCount ?? 0,
+      totalTokens: data.usageMetadata?.totalTokenCount ?? 0,
+    },
+  };
+}
+
+/**
+ * Executes the function-calling loop:
+ *   1. Send user message + tool declarations to Gemini.
+ *   2. If Gemini returns functionCalls, dispatch them, append functionResponse
+ *      parts to contents, and call Gemini again.
+ *   3. Repeat until Gemini returns only text (no function calls) or we hit
+ *      MAX_TOOL_ITERATIONS.
+ *   4. Returns the final text + a tool trace for the client UI.
+ */
+export async function callGeminiWithToolLoop(
+  systemPrompt: string,
+  userMessage: string,
+  history?: { role: 'user' | 'model'; text: string }[],
+): Promise<{
+  text: string;
+  tokenUsage: TokenUsage;
+  toolCalls: FunctionResult[];
+}> {
+  // Build initial contents
+  const contents: GeminiContent[] = [];
+  if (history && history.length > 0) {
+    for (const turn of history.slice(-5)) {
+      contents.push({ role: turn.role, parts: [{ text: turn.text }] });
+    }
+  }
+  contents.push({ role: 'user', parts: [{ text: userMessage }] });
+
+  const toolCalls: FunctionResult[] = [];
+  let totalTokenUsage: TokenUsage = { promptTokens: 0, completionTokens: 0, totalTokens: 0 };
+  let lastText = '';
+
+  for (const model of MODEL_NAMES) {
+    try {
+      console.log(`[gemini-tools] Trying model: ${model}`);
+      for (let iter = 0; iter < MAX_TOOL_ITERATIONS; iter++) {
+        const result = await callGeminiWithTools(model, systemPrompt, contents);
+        totalTokenUsage = {
+          promptTokens: totalTokenUsage.promptTokens + result.tokenUsage.promptTokens,
+          completionTokens: totalTokenUsage.completionTokens + result.tokenUsage.completionTokens,
+          totalTokens: totalTokenUsage.totalTokens + result.tokenUsage.totalTokens,
+        };
+        lastText = result.text;
+
+        if (result.functionCalls.length === 0) {
+          // No more tool calls — done
+          console.log(
+            `[gemini-tools] ${model} completed after ${String(iter)} tool iterations, tokens: ${String(totalTokenUsage.totalTokens)}`,
+          );
+          return { text: lastText, tokenUsage: totalTokenUsage, toolCalls };
+        }
+
+        // Append the model's function call as a model turn
+        contents.push({
+          role: 'model',
+          parts: result.functionCalls.map((fc) => ({
+            functionCall: { name: fc.name, args: fc.args },
+          })),
+        });
+
+        // Dispatch each function call and collect responses
+        for (const fc of result.functionCalls) {
+          console.log(`[gemini-tools] Dispatching: ${fc.name}`, fc.args);
+          const toolResult = dispatchFunctionCall(fc);
+          toolCalls.push(toolResult);
+          contents.push({
+            role: 'user', // function responses go in a user turn
+            parts: [
+              {
+                functionResponse: {
+                  name: toolResult.name,
+                  response: toolResult.response,
+                },
+              },
+            ],
+          });
+        }
+      }
+
+      // Hit iteration limit — return what we have
+      console.log(`[gemini-tools] ${model} hit iteration limit, returning last text`);
+      return { text: lastText, tokenUsage: totalTokenUsage, toolCalls };
+    } catch (err: unknown) {
+      if (err instanceof GeminiModelError) {
+        console.error(`[gemini-tools] ${model} failed: ${err.message}`);
+        continue;
+      }
+      throw err;
+    }
+  }
+
+  throw new Error('All Gemini models failed in tool loop');
+}
+
+/**
+ * Streaming variant that first runs the tool loop (non-streaming), then
+ * streams the final text to the client. Yields progress events for each
+ * tool call so the UI can show "Looking up crowd status..." etc.
+ */
+export async function* streamReplyWithTools(req: GeminiRequest): AsyncGenerator<{
+  chunk: string;
+  done: boolean;
+  tokenUsage?: TokenUsage;
+  cached: boolean;
+  toolCall?: { name: string; args: Record<string, unknown>; result: Record<string, unknown> };
+}> {
+  const systemPrompt = buildSystemPrompt({
+    locale: req.locale,
+    scope: req.scope,
+    stadiumName: req.stadiumName ?? null,
+    matchContext: req.matchContext ?? null,
+  });
+  const wrappedUserMessage = wrapUserMessage(req.message);
+
+  try {
+    const { text, tokenUsage, toolCalls } = await callGeminiWithToolLoop(
+      systemPrompt,
+      wrappedUserMessage,
+      req.history,
+    );
+
+    // Emit each tool call as a metadata chunk (UI can show "Looking up...")
+    for (const tc of toolCalls) {
+      yield {
+        chunk: '',
+        done: false,
+        cached: false,
+        toolCall: { name: tc.name, args: {}, result: tc.response },
+      };
+    }
+
+    // Stream the final text in word chunks (since the tool loop is non-streaming)
+    const words = text.split(' ');
+    for (let i = 0; i < words.length; i += 3) {
+      const chunk = words.slice(i, i + 3).join(' ') + (i + 3 < words.length ? ' ' : '');
+      yield { chunk, done: false, cached: false };
+    }
+    yield { chunk: '', done: true, tokenUsage, cached: false };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    console.error('[gemini-tools] Tool loop failed:', message);
+    throw err;
+  }
 }

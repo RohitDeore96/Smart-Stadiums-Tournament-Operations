@@ -4,6 +4,53 @@ All notable changes to StadiumOps AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.4.0] — Multi-Agent Architecture + Innovation Bundle
+
+### Added — Innovation (#72, #73, #74, #75, #76, #78, #79)
+
+- **Function calling** (#74): 4 Gemini functionDeclarations (`get_crowd_status`,
+  `file_incident`, `broadcast_announcement`, `find_nearest_facility`) with a
+  3-iteration tool dispatch loop. The model can now programmatically file
+  incidents, query crowd density, and broadcast announcements instead of just
+  suggesting UI buttons.
+- **Predictive crush analytics** (#73): Least-squares linear regression on the
+  10-reading densityRatio history extrapolates time-to-critical. Per-zone
+  warning badges ("⚠ Predicted critical in ~4 min") appear on cards, plus a
+  top-level dashboard alert banner when any zone is flagged.
+- **Multi-agent orchestration** (#79): Three specialized agents —
+  Triage (classifies severity from text), Routing (dispatches responder team),
+  Summary (generates shift-end reports) — exposed via `/api/agents?action=...`
+  and chainable via `runIncidentResponseChain`.
+- **Prompt chaining** (#78): `isComplexQuery` detector identifies multi-intent
+  queries ("How crowded is Gate A and should I go there?") and routes them
+  through the tool-enabled path for multi-step reasoning.
+- **Gemini Vision photo severity** (#75): New `/api/vision` endpoint accepts
+  base64 photos with `inlineData` and returns structured JSON (category,
+  severity, description, visual cues, safety concerns). `IncidentForm` now has
+  a photo upload field that auto-fills severity/category/description.
+- **Real sentiment analysis** (#76): New `/api/sentiment` endpoint classifies
+  incident descriptions as positive/neutral/negative + emotion + trend.
+  `FanSentimentWidget` no longer uses `Math.random()` — it polls real AI
+  analysis and combines with fan votes.
+
+### Added — Testing (#37)
+
+- Playwright E2E test suite with 3 specs: `fan-chat`, `volunteer-dashboard`,
+  `incident-workflow`. Auto-starts Vite dev server; CI job uploads HTML report
+  + traces on failure.
+- 25 new unit tests (111 total, up from 86): `tools.test.ts` (tool dispatchers),
+  `predictCrush.test.ts` (regression logic), `isComplexQuery` tests in
+  `intent.test.ts`.
+
+### Changed
+
+- `api/chat.ts` routes crowd/incident/wayfinding intents (and complex queries)
+  through `streamReplyWithTools` instead of plain `streamReply`.
+- `api/_lib/gemini.ts` adds `callGeminiWithTools`, `callGeminiWithToolLoop`,
+  `streamReplyWithTools` (function-calling support).
+- `FanSentimentWidget` UI labels switched from happy/neutral/sad to
+  positive/neutral/negative (matches AI output).
+
 ## [0.3.0] — Vercel Serverless + Full Interactivity
 
 ### Added

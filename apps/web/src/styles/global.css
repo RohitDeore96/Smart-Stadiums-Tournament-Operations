@@ -1370,6 +1370,179 @@ body {
   color: var(--color-text-subtle);
 }
 
+.sparkline-prediction {
+  display: block;
+  width: 100%;
+  margin-top: var(--space-1);
+  font-size: var(--font-size-xs);
+  color: var(--color-warning);
+  font-weight: 500;
+}
+
+/* ---- Predictive crush warning ---- */
+.zone-prediction {
+  margin-top: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.zone-prediction--warning {
+  background-color: rgba(251, 191, 36, 0.12);
+  border-left: 3px solid var(--color-warning);
+  color: var(--color-warning);
+}
+
+.zone-prediction--critical {
+  background-color: rgba(239, 68, 68, 0.15);
+  border-left: 3px solid var(--color-critical);
+  color: var(--color-critical);
+  font-weight: 600;
+  animation: pulse-warning 1.6s ease-in-out infinite;
+}
+
+.zone-prediction-text {
+  flex: 1;
+}
+
+.zone-prediction-confidence {
+  font-size: var(--font-size-xs);
+  opacity: 0.8;
+  font-weight: 400;
+}
+
+@keyframes pulse-warning {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* ---- Crush alert banner (dashboard-level) ---- */
+.crush-alert-banner {
+  margin: var(--space-3) 0;
+  padding: var(--space-4);
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.18), rgba(251, 191, 36, 0.12));
+  border: 1px solid var(--color-critical);
+  border-radius: var(--radius-md);
+  animation: pulse-warning 2s ease-in-out infinite;
+}
+
+.crush-alert-title {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-md);
+  color: var(--color-critical);
+  font-weight: 700;
+}
+
+.crush-alert-list {
+  margin: 0 0 var(--space-2);
+  padding-left: var(--space-4);
+  color: var(--color-text);
+}
+
+.crush-alert-item {
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--space-1);
+}
+
+.crush-alert-confidence {
+  color: var(--color-text-subtle);
+  font-size: var(--font-size-xs);
+}
+
+.crush-alert-action {
+  margin: var(--space-1) 0 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-warning);
+  font-style: italic;
+}
+
+/* ---- Photo upload + Vision AI ---- */
+.form-file-input {
+  padding: var(--space-2);
+  background-color: var(--color-bg-elevated);
+  border: 1px dashed var(--color-border);
+  cursor: pointer;
+}
+
+.form-help {
+  display: block;
+  margin-top: var(--space-1);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-subtle);
+}
+
+.photo-preview-container {
+  margin-top: var(--space-2);
+  padding: var(--space-2);
+  background-color: var(--color-bg-elevated);
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.vision-analyzing {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-sm);
+  color: var(--color-primary);
+}
+
+.vision-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--color-primary-dim);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.vision-result {
+  padding: var(--space-2);
+  background-color: rgba(0, 212, 255, 0.08);
+  border-left: 3px solid var(--color-primary);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+}
+
+.vision-result-row {
+  margin-bottom: var(--space-1);
+}
+
+.vision-description {
+  color: var(--color-text);
+  font-style: italic;
+}
+
+.vision-cues {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+}
+
+.vision-safety {
+  color: var(--color-critical);
+  font-weight: 600;
+}
+
+.vision-error {
+  padding: var(--space-2);
+  background-color: rgba(239, 68, 68, 0.1);
+  border-left: 3px solid var(--color-critical);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  color: var(--color-critical);
+}
+
 .zone-card--expanded {
   border-color: var(--color-primary);
   cursor: pointer;
@@ -1701,9 +1874,46 @@ body {
 .legend-dot--critical { background-color: #ef4444; }
 
 /* ---- Sentiment bar fill classes (replaces inline styles) ---- */
-.sentiment-bar-fill--happy { background-color: #4ade80; }
+.sentiment-bar-fill--positive { background-color: #4ade80; }
 .sentiment-bar-fill--neutral { background-color: #fbbf24; }
+.sentiment-bar-fill--negative { background-color: #f87171; }
+/* Backward-compat aliases */
+.sentiment-bar-fill--happy { background-color: #4ade80; }
 .sentiment-bar-fill--sad { background-color: #f87171; }
+
+.sentiment-loading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-sm);
+  color: var(--color-primary);
+  margin: var(--space-2) 0;
+}
+
+.sentiment-error {
+  font-size: var(--font-size-sm);
+  color: var(--color-critical);
+  margin: var(--space-2) 0;
+}
+
+.sentiment-ai-summary {
+  padding: var(--space-2);
+  background-color: rgba(0, 212, 255, 0.06);
+  border-left: 3px solid var(--color-primary);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  margin: var(--space-2) 0;
+}
+
+.sentiment-ai-label {
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.sentiment-ai-meta {
+  color: var(--color-text-subtle);
+  font-size: var(--font-size-xs);
+}
 
 /* ---- Forced colors mode (Windows High Contrast) ---- */
 @media (forced-colors: active) {

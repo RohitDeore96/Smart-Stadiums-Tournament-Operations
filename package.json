@@ -13,6 +13,9 @@
     "dev:api": "vercel dev",
     "build": "pnpm --filter @stadiumops/shared build && pnpm --filter @stadiumops/web build",
     "test": "pnpm -r --stream test && vitest run --config api/vitest.config.ts",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:installed": "playwright install --with-deps chromium",
     "lint": "pnpm -r --stream lint && eslint \"api/**/*.ts\" --max-warnings=0",
     "typecheck": "pnpm -r --stream typecheck && tsc --noEmit -p api/tsconfig.json",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\"",
@@ -22,6 +25,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.11.1",
+    "@playwright/test": "^1.61.1",
     "@types/node": "^20.16.10",
     "@typescript-eslint/eslint-plugin": "^8.8.0",
     "@typescript-eslint/parser": "^8.8.0",

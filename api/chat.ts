@@ -16,14 +16,23 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { ChatMessageSchema, type ChatStreamEvent } from './_lib/schema.js';
 import { checkSafety } from './_lib/safety.js';
-import { classifyIntent } from './_lib/intent.js';
-import { streamReply } from './_lib/gemini.js';
+import { classifyIntent, isComplexQuery } from './_lib/intent.js';
+import { streamReply, streamReplyWithTools } from './_lib/gemini.js';
 import { checkRateLimit } from './_lib/rateLimit.js';
 import { suggestActions } from './_lib/actions.js';
 import { getFallbackReply } from './_lib/fallback.js';
 import { requireAuth } from './_lib/auth.js';
 import { verifyOrigin } from './_lib/csrf.js';
 import { logger, generateRequestId, setRequestId } from './_lib/logger.js';
+
+// Intents where function calling adds value (model can query crowd status,
+// file incidents, find facilities programmatically).
+const TOOL_ENABLED_INTENTS = new Set([
+  'crowd_status',
+  'incident_report',
+  'wayfinding',
+  'facility_info',
+]);
 
 export const config = {
   maxDuration: 30,
@@ -122,28 +131,67 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     const intentResult = classifyIntent(body.message);
     let tokenUsage = { promptTokens: 0, completionTokens: 0, totalTokens: 0 };
     let geminiSucceeded = false;
+    // Use tools (prompt chaining) when: (a) intent is crowd/incident/wayfinding,
+    // OR (b) the query is complex (multiple intents — needs multi-step reasoning).
+    const useTools = TOOL_ENABLED_INTENTS.has(intentResult.intent) || isComplexQuery(body.message);
 
     try {
-      for await (const chunk of streamReply({
-        message: body.message,
-        locale: body.locale,
-        scope: 'fan_assistant',
-        stadiumName: null,
-        matchContext: null,
-        history: body.history ?? undefined,
-      })) {
-        if (chunk.chunk) {
-          geminiSucceeded = true;
-          sendEvent({ type: 'token', value: chunk.chunk });
+      if (useTools) {
+        // Tool-enabled path: model can call get_crowd_status, file_incident, etc.
+        for await (const chunk of streamReplyWithTools({
+          message: body.message,
+          locale: body.locale,
+          scope: 'fan_assistant',
+          stadiumName: null,
+          matchContext: null,
+          history: body.history ?? undefined,
+        })) {
+          if (chunk.toolCall) {
+            // Emit a tool_call event so the UI can show "Looking up crowd status..."
+            sendEvent({
+              type: 'metadata',
+              intent: intentResult.intent,
+              confidence: intentResult.confidence,
+              suggestedActions: suggestActions(intentResult.intent),
+              emergencyEscalated: false,
+            });
+            sendEvent({
+              type: 'token',
+              value: `\n[🔧 Calling ${chunk.toolCall.name}...]\n`,
+            });
+          }
+          if (chunk.chunk) {
+            geminiSucceeded = true;
+            sendEvent({ type: 'token', value: chunk.chunk });
+          }
+          if (chunk.done && chunk.tokenUsage) {
+            tokenUsage = chunk.tokenUsage;
+          }
         }
-        if (chunk.done && chunk.tokenUsage) {
-          tokenUsage = chunk.tokenUsage;
+      } else {
+        // Standard streaming path (no tools)
+        for await (const chunk of streamReply({
+          message: body.message,
+          locale: body.locale,
+          scope: 'fan_assistant',
+          stadiumName: null,
+          matchContext: null,
+          history: body.history ?? undefined,
+        })) {
+          if (chunk.chunk) {
+            geminiSucceeded = true;
+            sendEvent({ type: 'token', value: chunk.chunk });
+          }
+          if (chunk.done && chunk.tokenUsage) {
+            tokenUsage = chunk.tokenUsage;
+          }
         }
       }
     } catch (geminiErr: unknown) {
       logger.error('Gemini failed, using fallback', {
         error: geminiErr instanceof Error ? geminiErr.message : 'Unknown',
         intent: intentResult.intent,
+        useTools,
       });
       sendEvent({ type: 'token', value: getFallbackReply(intentResult.intent, body.locale) });
     }

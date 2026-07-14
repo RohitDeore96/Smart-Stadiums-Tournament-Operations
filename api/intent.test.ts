@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { classifyIntent } from './_lib/intent.js';
+import { classifyIntent, isComplexQuery } from './_lib/intent.js';
 
 describe('classifyIntent', () => {
   describe('wayfinding', () => {
@@ -133,5 +133,29 @@ describe('classifyIntent', () => {
       expect(result.intent).toBe('wayfinding');
       expect(result.confidence).toBe(0.85);
     });
+  });
+});
+
+describe('isComplexQuery', () => {
+  it('returns false for simple single-intent queries', () => {
+    expect(isComplexQuery('where is gate A')).toBe(false);
+    expect(isComplexQuery('how busy is the stadium')).toBe(false);
+  });
+
+  it('returns true for queries combining multiple intents', () => {
+    // wayfinding + crowd_status
+    expect(isComplexQuery('How crowded is Gate A and where is it?')).toBe(true);
+    // incident_report + crowd_status
+    expect(isComplexQuery('Someone fainted in the crowded queue at Gate B')).toBe(true);
+  });
+
+  it('returns true for queries with "should I" pattern', () => {
+    expect(isComplexQuery('Should I go to Gate A?')).toBe(true);
+    expect(isComplexQuery('What about Gate B?')).toBe(true);
+  });
+
+  it('returns false for very simple queries', () => {
+    expect(isComplexQuery('hi')).toBe(false);
+    expect(isComplexQuery('thanks')).toBe(false);
   });
 });

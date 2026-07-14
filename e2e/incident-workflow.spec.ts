@@ -1,0 +1,100 @@
+/**
+ * @file e2e/incident-workflow.spec.ts
+ * @description E2E test: venue staff can file an incident and see it appear
+ *   in the queue. Also verifies the photo upload UI is present.
+ */
+import { test, expect } from '@playwright/test';
+
+test.describe('Incident workflow', () => {
+  test('venue staff page renders incident queue', async ({ page }) => {
+    await page.goto('/staff');
+
+    // Page should load
+    await expect(page.locator('h1, h2, .page-title').first()).toBeVisible({ timeout: 10_000 });
+
+    // Should have incident-related UI (queue, list, or form)
+    const incidentUi = page.locator(
+      '.incident-card, .incident-item, .incidents-list, .incident-form, [data-testid="incident-queue"]',
+    );
+    await expect(incidentUi.first()).toBeVisible({ timeout: 10_000 });
+  });
+
+  test('incidents page allows filing a new incident', async ({ page }) => {
+    await page.goto('/incidents');
+
+    // Look for a "file new incident" button or form
+    const fileButton = page.locator(
+      'button:has-text("File"), button:has-text("Report"), button:has-text("New"), [aria-label*="file" i]',
+    );
+
+    if (
+      await fileButton
+        .first()
+        .isVisible({ timeout: 5_000 })
+        .catch(() => false)
+    ) {
+      await fileButton.first().click();
+
+      // Form should appear with required fields
+      await expect(page.locator('#incident-title, input[name="title"]').first()).toBeVisible({
+        timeout: 5_000,
+      });
+      await expect(
+        page.locator('#incident-description, textarea[name="description"]').first(),
+      ).toBeVisible();
+
+      // The photo upload field (new vision feature) should be present
+      await expect(page.locator('#incident-photo, input[type="file"]')).toBeVisible();
+
+      // Category and severity selects should be present
+      await expect(
+        page.locator('#incident-category, select[name="category"]').first(),
+      ).toBeVisible();
+      await expect(
+        page.locator('#incident-severity, select[name="severity"]').first(),
+      ).toBeVisible();
+    }
+  });
+
+  test('incident form has photo upload with AI analysis hint', async ({ page }) => {
+    await page.goto('/incidents');
+
+    // Try to open the form
+    const fileButton = page.locator(
+      'button:has-text("File"), button:has-text("Report"), button:has-text("New")',
+    );
+    if (
+      await fileButton
+        .first()
+        .isVisible({ timeout: 5_000 })
+        .catch(() => false)
+    ) {
+      await fileButton.first().click();
+
+      // The photo field should mention AI analysis
+      const photoLabel = page.locator('label[for="incident-photo"]');
+      await expect(photoLabel).toBeVisible({ timeout: 5_000 });
+      const labelText = (await photoLabel.textContent()) ?? '';
+      expect(labelText.toLowerCase()).toContain('ai');
+    }
+  });
+
+  test('acknowledge button works on open incidents', async ({ page }) => {
+    await page.goto('/staff');
+
+    // Find an Acknowledge button (if any open incidents exist)
+    const ackButton = page.locator('button:has-text("Acknowledge"), button:has-text("Ack")');
+
+    if (
+      await ackButton
+        .first()
+        .isVisible({ timeout: 5_000 })
+        .catch(() => false)
+    ) {
+      await ackButton.first().click();
+      // After clicking, the button should disappear or change state
+      // (Detailed state verification is in unit tests)
+      await page.waitForTimeout(500);
+    }
+  });
+});

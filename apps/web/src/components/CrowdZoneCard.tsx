@@ -9,6 +9,7 @@
 import { type FC, useState, memo } from 'react';
 import type { CrowdZoneReading } from '@stadiumops/shared';
 import { useI18n } from '../context/I18nContext.js';
+import { predictCrush } from '../lib/predictCrush.js';
 
 interface CrowdZoneCardProps {
   reading: CrowdZoneReading;
@@ -31,6 +32,9 @@ export const CrowdZoneCard: FC<CrowdZoneCardProps> = memo(
     const trend = computeTrend(history);
     const trendIcon = trend === 'rising' ? '↑' : trend === 'falling' ? '↓' : '→';
     const trendLabel = trend === 'rising' ? 'Rising' : trend === 'falling' ? 'Falling' : 'Stable';
+
+    // Predictive crush analytics — extrapolate from history
+    const crushPrediction = predictCrush(history);
 
     // Build sparkline SVG points
     const sparklinePoints =
@@ -66,6 +70,21 @@ export const CrowdZoneCard: FC<CrowdZoneCardProps> = memo(
             {t(levelKey)}
           </span>
         </header>
+
+        {crushPrediction.warning && (
+          <div
+            className={`zone-prediction ${crushPrediction.willBeCritical ? 'zone-prediction--critical' : 'zone-prediction--warning'}`}
+            role="alert"
+            aria-live="assertive"
+          >
+            <span className="zone-prediction-text">{crushPrediction.warning}</span>
+            {crushPrediction.willBeCritical && crushPrediction.minutesToCritical !== null && (
+              <span className="zone-prediction-confidence">
+                (conf: {String(Math.round(crushPrediction.confidence * 100))}%)
+              </span>
+            )}
+          </div>
+        )}
 
         <div className="zone-stats">
           <div className="zone-stat">
@@ -111,6 +130,14 @@ export const CrowdZoneCard: FC<CrowdZoneCardProps> = memo(
               />
             </svg>
             <span className="sparkline-label">Last {String(history.length)} readings</span>
+            {crushPrediction.slope !== 0 && (
+              <span className="sparkline-prediction">
+                5-min forecast:{' '}
+                {String(Math.round(crushPrediction.predictedDensityAtHorizon * 100))}%
+                {crushPrediction.minutesToCritical !== null &&
+                  ` · critical in ~${String(Math.round(crushPrediction.minutesToCritical))}min`}
+              </span>
+            )}
           </div>
         )}
 
