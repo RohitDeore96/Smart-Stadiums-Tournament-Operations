@@ -48,3 +48,13 @@ if (!window.fetch) {
     });
   }) as typeof window.fetch;
 }
+
+// jsdom doesn't implement scrollTo
+if (!window.scrollTo) {
+  window.scrollTo = () => undefined;
+}
+
+// jsdom doesn't implement scrollIntoView
+if (!Element.prototype.scrollIntoView) {
+  Element.prototype.scrollIntoView = () => undefined;
+}
