@@ -53,11 +53,18 @@ async function checkRateLimitKV(ip: string): Promise<RateLimitResult> {
   const now = Date.now();
   const resetAt = now + WINDOW_MS;
 
+  const kvUrl = process.env.KV_REST_API_URL;
+  const kvToken = process.env.KV_REST_API_TOKEN;
+
+  if (!kvUrl || !kvToken) {
+    return checkRateLimitMemory(ip);
+  }
+
   try {
     // Use Upstash Redis REST API (Vercel KV compatible)
-    const response = await fetch(`${process.env.KV_REST_API_URL}/incr/${key}`, {
+    const response = await fetch(`${kvUrl}/incr/${key}`, {
       headers: {
-        Authorization: `Bearer ${process.env.KV_REST_API_TOKEN}`,
+        Authorization: `Bearer ${kvToken}`,
       },
     });
 
@@ -71,14 +78,11 @@ async function checkRateLimitKV(ip: string): Promise<RateLimitResult> {
 
     // Set TTL on first request
     if (count === 1) {
-      await fetch(
-        `${process.env.KV_REST_API_URL}/expire/${key}/${String(Math.ceil(WINDOW_MS / 1000))}`,
-        {
-          headers: {
-            Authorization: `Bearer ${process.env.KV_REST_API_TOKEN}`,
-          },
+      await fetch(`${kvUrl}/expire/${key}/${String(Math.ceil(WINDOW_MS / 1000))}`, {
+        headers: {
+          Authorization: `Bearer ${kvToken}`,
         },
-      );
+      });
     }
 
     return {
