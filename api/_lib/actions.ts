@@ -8,7 +8,7 @@
 export type SuggestedAction =
   | { type: 'show_route'; label: string; payload: Record<string, never> }
   | { type: 'open_map'; label: string; payload: Record<string, never> }
-  | { type: 'file_incident'; label: string; payload: { category: string } }
+  | { type: 'file_incident'; label: string; payload: { category: string; severity?: string } }
   | { type: 'view_crowd'; label: string; payload: Record<string, never> }
   | { type: 'translate'; label: string; payload: Record<string, never> };
 

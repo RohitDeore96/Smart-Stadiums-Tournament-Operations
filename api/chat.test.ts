@@ -55,13 +55,13 @@ vi.mock('./_lib/csrf.js', () => ({
 // Mock logger to avoid noise in test output
 vi.mock('./_lib/logger.js', () => ({
   logger: {
-    info: () => {},
-    debug: () => {},
-    warn: () => {},
-    error: () => {},
+    info: () => undefined,
+    debug: () => undefined,
+    warn: () => undefined,
+    error: () => undefined,
   },
   generateRequestId: () => 'test-req-id',
-  setRequestId: () => {},
+  setRequestId: () => undefined,
 }));
 
 // Import AFTER mocks are set up
