@@ -147,14 +147,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
           history: body.history ?? undefined,
         })) {
           if (chunk.toolCall) {
-            // Emit a tool_call event so the UI can show "Looking up crowd status..."
-            sendEvent({
-              type: 'metadata',
-              intent: intentResult.intent,
-              confidence: intentResult.confidence,
-              suggestedActions: suggestActions(intentResult.intent),
-              emergencyEscalated: false,
-            });
+            // Emit a tool-call indicator as a token (UI shows "🔧 Calling...")
+            // We do NOT emit metadata here — it's emitted once at the end.
             sendEvent({
               type: 'token',
               value: `\n[🔧 Calling ${chunk.toolCall.name}...]\n`,
