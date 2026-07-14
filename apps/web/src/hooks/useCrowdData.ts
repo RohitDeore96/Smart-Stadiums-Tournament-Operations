@@ -34,8 +34,15 @@ export function useCrowdData(): UseCrowdDataReturn {
     let unsubscribe: (() => void) | null = null;
     let isPaused = false;
 
+    // Reduced-data mode: poll less frequently if user has data-saver enabled
+    const isReducedData =
+      typeof navigator !== 'undefined' &&
+      (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData ===
+        true;
+    const pollInterval = isReducedData ? 30_000 : 5_000;
+
     const startSubscription = (): void => {
-      if (unsubscribe) return; // already subscribed
+      if (unsubscribe) return;
       unsubscribe = subscribeToCrowdData((newReadings) => {
         if (!mounted || isPaused) return;
 

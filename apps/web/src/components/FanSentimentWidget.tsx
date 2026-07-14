@@ -26,10 +26,12 @@ export const FanSentimentWidget: FC = () => {
   const [votes, setVotes] = useState<VoteCounts>({ happy: 12, neutral: 5, sad: 2 });
   const [userVoted, setUserVoted] = useState<Sentiment | null>(null);
 
-  // Simulate other fans voting every 3 seconds
+  // Simulate other fans voting every 3 seconds (capped at 1000 total)
   useEffect(() => {
     const interval = setInterval(() => {
       setVotes((prev) => {
+        const total = prev.happy + prev.neutral + prev.sad;
+        if (total >= 1000) return prev; // Cap at 1000 to prevent unbounded growth
         const sentiments: Sentiment[] = ['happy', 'neutral', 'sad'];
         const random = sentiments[Math.floor(Math.random() * 3)] ?? 'happy';
         const increment = Math.floor(Math.random() * 4) + 1;

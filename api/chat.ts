@@ -155,7 +155,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
       suggestedActions: suggestActions(intentResult.intent),
       emergencyEscalated: false,
     });
-    sendEvent({ type: 'done', messageId: `msg_${String(Date.now())}`, tokenUsage });
+    sendEvent({
+      type: 'done',
+      messageId: `msg_${String(Date.now())}`,
+      tokenUsage,
+      requestId,
+    } as ChatStreamEvent & { requestId: string });
     res.end();
   } catch (err: unknown) {
     logger.error('Handler failed', { error: err instanceof Error ? err.message : 'Unknown' });

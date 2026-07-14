@@ -59,10 +59,8 @@ export const VenueStaffPage: FC = () => {
   return (
     <>
       <section className="page-header">
-        <h2 className="page-title">🏟️ Venue Staff — Escalation Dashboard</h2>
-        <p className="page-subtitle">
-          Acknowledge, assign, and resolve incidents across the stadium
-        </p>
+        <h2 className="page-title">🏟️ {t('venueStaff.title')}</h2>
+        <p className="page-subtitle">{t('venueStaff.subtitle')}</p>
       </section>
 
       <div className="stats-grid">
@@ -72,7 +70,7 @@ export const VenueStaffPage: FC = () => {
           </span>
           <div className="stat-content">
             <span className="stat-value">{String(stats.total)}</span>
-            <span className="stat-label">Total</span>
+            <span className="stat-label">{t('venueStaff.total')}</span>
           </div>
         </div>
         <div className="stat-card stat-card--warning">
@@ -81,7 +79,7 @@ export const VenueStaffPage: FC = () => {
           </span>
           <div className="stat-content">
             <span className="stat-value">{String(stats.pending)}</span>
-            <span className="stat-label">Pending</span>
+            <span className="stat-label">{t('venueStaff.pending')}</span>
           </div>
         </div>
         <div className="stat-card stat-card--warning">
@@ -90,7 +88,7 @@ export const VenueStaffPage: FC = () => {
           </span>
           <div className="stat-content">
             <span className="stat-value">{String(stats.inProgress)}</span>
-            <span className="stat-label">In Progress</span>
+            <span className="stat-label">{t('venueStaff.inProgress')}</span>
           </div>
         </div>
         <div className="stat-card">
@@ -99,7 +97,7 @@ export const VenueStaffPage: FC = () => {
           </span>
           <div className="stat-content">
             <span className="stat-value">{String(stats.resolved)}</span>
-            <span className="stat-label">Resolved</span>
+            <span className="stat-label">{t('venueStaff.resolved')}</span>
           </div>
         </div>
       </div>
@@ -118,14 +116,14 @@ export const VenueStaffPage: FC = () => {
                 aria-pressed={filter === f}
               >
                 {f === 'all'
-                  ? 'All'
+                  ? t('venueStaff.all')
                   : f === 'pending'
-                    ? 'Pending'
+                    ? t('venueStaff.pending')
                     : f === 'acknowledged'
-                      ? 'Acknowledged'
+                      ? t('venueStaff.acknowledged')
                       : f === 'assigned'
-                        ? 'Assigned'
-                        : 'Resolved'}
+                        ? t('venueStaff.assigned')
+                        : t('venueStaff.resolved')}
               </button>
             ),
           )}

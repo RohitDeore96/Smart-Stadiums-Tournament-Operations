@@ -89,6 +89,18 @@ const en: Translations = {
   'announcements.delete': 'Delete',
   'announcements.title': '📢 Announcements',
   'announcements.subtitle': 'Organizer dashboard — publish stadium-wide announcements',
+  'venueStaff.title': '🏟️ Venue Staff — Escalation Dashboard',
+  'venueStaff.subtitle': 'Acknowledge, assign, and resolve incidents across the stadium',
+  'venueStaff.total': 'Total',
+  'venueStaff.pending': 'Pending',
+  'venueStaff.inProgress': 'In Progress',
+  'venueStaff.resolved': 'Resolved',
+  'venueStaff.all': 'All',
+  'venueStaff.acknowledged': 'Acknowledged',
+  'venueStaff.assigned': 'Assigned',
+  'venueStaff.acknowledgeAction': 'Acknowledge',
+  'venueStaff.assignAction': 'Assign Responder',
+  'venueStaff.resolveAction': 'Resolve',
 };
 
 export default en;

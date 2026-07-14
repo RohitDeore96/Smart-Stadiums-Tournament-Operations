@@ -20,6 +20,9 @@ export const Layout: FC<LayoutProps> = ({ children, activePath }) => {
       <a href="#main-content" className="skip-link">
         Skip to main content
       </a>
+      <a href="#/chat" className="skip-link" style={{ top: '40px' }}>
+        Skip to chat
+      </a>
       <div
         id="language-announcement"
         className="language-announcement"
