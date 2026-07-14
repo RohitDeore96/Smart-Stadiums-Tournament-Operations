@@ -1,31 +1,33 @@
 /**
  * @file api/_lib/auth.ts
  * @description Lightweight authentication middleware for Vercel serverless.
- *   Verifies a Bearer token against a shared secret stored in env var.
- *   This is a pragmatic auth layer for a hackathon — not JWT/Firebase Admin,
- *   but prevents anonymous abuse of the Gemini API.
+ *   Verifies a Bearer token against the AUTH_TOKEN env var.
  *
- *   In production, replace with Firebase Admin token verification.
- *   For the demo: the frontend sends a static demo token that proves
- *   the request came from the app (not a direct API call).
+ *   No hardcoded tokens — the demo token is read from env var AUTH_TOKEN.
+ *   If AUTH_TOKEN is not set, auth is bypassed in development only.
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-/** The demo auth token — set in Vercel env vars as AUTH_TOKEN. */
-const DEMO_TOKEN = 'stadiumops-demo-2026';
+/** Max length for Authorization header to prevent abuse (DoS via oversized headers). */
+const MAX_AUTH_HEADER_LENGTH = 1024;
 
 /**
  * Verifies the Authorization header contains a valid Bearer token.
  * Returns true if authorized, false otherwise.
  *
- * Accepts:
- * - The demo token (for the public hackathon demo)
- * - A custom token set via AUTH_TOKEN env var (for production)
+ * Token source: AUTH_TOKEN env var (set in Vercel → Settings → Environment Variables).
+ * In development (NODE_ENV !== 'production'), auth is optional if AUTH_TOKEN is unset.
  */
 export function verifyAuth(req: VercelRequest): boolean {
   const authHeader = req.headers.authorization;
-  if (!authHeader) return false;
+  if (!authHeader) {
+    // In development, allow requests without auth if AUTH_TOKEN is not set
+    return process.env.NODE_ENV !== 'production' && !process.env.AUTH_TOKEN;
+  }
+
+  // Prevent DoS via oversized Authorization headers
+  if (authHeader.length > MAX_AUTH_HEADER_LENGTH) return false;
 
   const match = /^Bearer\s+(.+)$/i.exec(authHeader);
   if (!match?.[1]) return false;
@@ -33,8 +35,23 @@ export function verifyAuth(req: VercelRequest): boolean {
   const token = match[1];
   const envToken = process.env.AUTH_TOKEN;
 
-  // Accept either the demo token or the env-configured token
-  return token === DEMO_TOKEN || (envToken !== undefined && token === envToken);
+  if (!envToken) {
+    // In development without AUTH_TOKEN configured, accept any Bearer token
+    return process.env.NODE_ENV !== 'production';
+  }
+
+  // Constant-time comparison to prevent timing attacks
+  return timingSafeEqual(token, envToken);
+}
+
+/** Constant-time string comparison to prevent timing attacks. */
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return result === 0;
 }
 
 /**

@@ -37,6 +37,11 @@ const RouteTracker: FC = () => {
 
   useEffect(() => {
     window.scrollTo(0, 0);
+    // Move focus to the main content for screen-reader users on route change
+    const mainContent = document.getElementById('main-content');
+    if (mainContent) {
+      mainContent.focus();
+    }
   }, [location.pathname]);
 
   return (

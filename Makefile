@@ -40,7 +40,7 @@ dev: ## Run API + Web in parallel (requires tmux or two terminals)
 	@make dev-web
 	@wait
 
-dev-api: ## Start backend dev server (Fastify on :8080)
+dev-api: ## Start Vercel dev server (:3000)
 	pnpm dev:api
 
 dev-web: ## Start frontend dev server (Vite on :5173)
@@ -80,7 +80,7 @@ git-init: ## Initialize git repo with initial commit (for fresh setup)
 		echo "$(YELLOW)Initializing git…$(RESET)"; \
 		git init -b main; \
 		git add .; \
-		git commit -m "feat: phase 1 — architecture, data models, Dockerfile, CI/CD"; \
+		git commit -m "feat: phase 1 — architecture, data models, CI/CD"; \
 		echo "$(GREEN)Done. Now add your remote:$(RESET)"; \
 		echo "  git remote add origin https://github.com/RohitDeore96/Smart-Stadiums-Tournament-Operations.git"; \
 		echo "  git push -u origin main"; \
