@@ -29,8 +29,8 @@ green "✓ Node $node_version"
 
 # --- pnpm ---
 if ! command -v pnpm >/dev/null 2>&1; then
-  yellow "→ Installing pnpm@9…"
-  npm install -g pnpm@9
+  yellow "→ Installing pnpm@10…"
+  npm install -g pnpm@10
 fi
 pnpm_version=$(pnpm -v)
 green "✓ pnpm $pnpm_version"

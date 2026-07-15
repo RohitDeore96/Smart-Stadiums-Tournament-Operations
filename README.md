@@ -4,7 +4,9 @@
 
 ### GenAI-enabled stadium operations, crowd management & fan experience for FIFA World Cup 2026
 
-[![Phase](https://img.shields.io/badge/phase-3%20live-00d4ff?style=flat-square)](https://smart-stadiums-tournament-operation-nine.vercel.app)
+[![CI](https://github.com/RohitDeore96/Smart-Stadiums-Tournament-Operations/actions/workflows/ci.yml/badge.svg)](https://github.com/RohitDeore96/Smart-Stadiums-Tournament-Operations/actions/workflows/ci.yml)
+[![Deploy](https://github.com/RohitDeore96/Smart-Stadiums-Tournament-Operations/actions/workflows/deploy.yml/badge.svg)](https://github.com/RohitDeore96/Smart-Stadiums-Tournament-Operations/actions/workflows/deploy.yml)
+[![Phase](https://img.shields.io/badge/phase-v0.4%20multi--agent-00d4ff?style=flat-square)](https://smart-stadiums-tournament-operation-nine.vercel.app)
 [![Node](https://img.shields.io/badge/node-20.11%2B-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/typescript-5.6%2B-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)

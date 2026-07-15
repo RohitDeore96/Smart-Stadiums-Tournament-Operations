@@ -36,7 +36,7 @@ export default defineConfig({
   webServer: process.env.E2E_BASE_URL
     ? undefined
     : {
-        command: 'pnpm --filter web dev',
+        command: 'pnpm --filter @stadiumops/web dev',
         url: 'http://localhost:5173',
         reuseExistingServer: !process.env.CI,
         timeout: 60_000,

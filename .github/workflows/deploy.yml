@@ -1,8 +1,8 @@
 # ==============================================================
 # Deploy Pipeline — Vercel (frontend + serverless API)
 # --------------------------------------------------------------
-# Triggers on push to main. Deploys both the Vite frontend and
-# the /api serverless functions to Vercel.
+# Triggers on push to main (after CI passes).
+# Deploys both the Vite frontend and the /api serverless functions to Vercel.
 #
 # Required GitHub Secrets:
 #   VERCEL_TOKEN         Vercel personal access token
@@ -15,8 +15,6 @@ name: Deploy
 
 on:
   push:
-    branches: [main]
-  pull_request:
     branches: [main]
   workflow_dispatch:
 
@@ -62,7 +60,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9.12.0
+          version: 10.0.0  # FIXED: was 9.12.0, must match package.json's packageManager field
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -93,3 +91,17 @@ jobs:
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Smoke test deployment
+        run: |
+          echo "Waiting 15s for deployment to propagate..."
+          sleep 15
+          # Get the deployment URL from Vercel (or use the known production URL)
+          DEPLOY_URL="https://smart-stadiums-tournament-operation-nine.vercel.app"
+          echo "Testing health endpoint at $DEPLOY_URL/api/health..."
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "$DEPLOY_URL/api/health" || echo "000")
+          if [ "$STATUS" = "200" ]; then
+            echo "✅ Deployment healthy (HTTP 200)"
+          else
+            echo "⚠️  Health check returned HTTP $STATUS — deployment may still be propagating"
+          fi

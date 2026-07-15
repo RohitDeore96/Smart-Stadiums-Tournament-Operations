@@ -28,7 +28,7 @@ cp .env.example .env     # fill in FIREBASE_* and GEMINI_API_KEY
 ## 3. Development workflow
 
 ```bash
-pnpm dev:api              # backend on :8080 (hot reload via tsx watch)
+pnpm dev:api              # backend on :3000 (Vercel dev server)
 pnpm dev:web              # frontend on :5173 (Vite HMR)
 pnpm test                 # run all unit + integration tests
 pnpm test:coverage        # generate coverage report

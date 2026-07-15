@@ -15,9 +15,9 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
     proxy: {
-      // Proxy API calls to the backend in dev — avoids CORS friction during dev
+      // Proxy API calls to the Vercel dev server in dev — avoids CORS friction during dev
       '/api': {
-        target: 'http://localhost:8080',
+        target: 'http://localhost:3000',
         changeOrigin: true,
       },
     },

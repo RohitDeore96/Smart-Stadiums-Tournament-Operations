@@ -7,7 +7,7 @@
 
 set -euo pipefail
 
-API_URL="${API_URL:-http://localhost:8080}"
+API_URL="${API_URL:-http://localhost:3000}"
 WEB_URL="${WEB_URL:-http://localhost:5173}"
 
 green() { printf "\033[32m%s\033[0m\n" "$1"; }
@@ -17,8 +17,8 @@ yellow(){ printf "\033[33m%s\033[0m\n" "$1"; }
 fail=0
 
 # --- API health ---
-echo "Checking API at $API_URL/api/v1/health…"
-api_resp=$(curl -sS -m 3 -o /dev/null -w "%{http_code}" "$API_URL/api/v1/health" 2>/dev/null || echo "000")
+echo "Checking API at $API_URL/api/health…"
+api_resp=$(curl -sS -m 3 -o /dev/null -w "%{http_code}" "$API_URL/api/health" 2>/dev/null || echo "000")
 if [ "$api_resp" = "200" ]; then
   green "  ✓ API healthy (200)"
 else

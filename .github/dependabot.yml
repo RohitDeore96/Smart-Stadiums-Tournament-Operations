@@ -32,17 +32,7 @@ updates:
       - dependency-name: '*'
         update-types: ['version-update:semver-major']
 
-  # API workspace
-  - package-ecosystem: 'npm'
-    directory: '/apps/api'
-    schedule:
-      interval: 'weekly'
-    open-pull-requests-limit: 5
-    labels: ['dependencies']
-    commit-message:
-      prefix: 'chore(api-deps)'
-
-  # Web workspace
+  # Web workspace (apps/web has its own package.json)
   - package-ecosystem: 'npm'
     directory: '/apps/web'
     schedule:
@@ -52,7 +42,7 @@ updates:
     commit-message:
       prefix: 'chore(web-deps)'
 
-  # Shared workspace
+  # Shared workspace (packages/shared has its own package.json)
   - package-ecosystem: 'npm'
     directory: '/packages/shared'
     schedule:
@@ -62,7 +52,7 @@ updates:
     commit-message:
       prefix: 'chore(shared-deps)'
 
-  # GitHub Actions
+  # GitHub Actions — keep workflow action versions current
   - package-ecosystem: 'github-actions'
     directory: '/'
     schedule:
@@ -70,12 +60,3 @@ updates:
     labels: ['dependencies']
     commit-message:
       prefix: 'chore(ci-deps)'
-
-  # Docker base images
-  - package-ecosystem: 'docker'
-    directory: '/apps/api'
-    schedule:
-      interval: 'weekly'
-    labels: ['dependencies']
-    commit-message:
-      prefix: 'chore(docker-deps)'
