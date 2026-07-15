@@ -2,11 +2,11 @@
   "name": "stadiumops-ai",
   "version": "0.3.0",
   "private": true,
-  "description": "StadiumOps AI — GenAI-enabled stadium operations platform for FIFA World Cup 2026",
+  "description": "StadiumOps AI \u2014 GenAI-enabled stadium operations platform for FIFA World Cup 2026",
   "license": "MIT",
   "packageManager": "pnpm@10.0.0",
   "engines": {
-    "node": ">=20.11.0"
+    "node": ">=22.0.0"
   },
   "scripts": {
     "dev:web": "pnpm --filter @stadiumops/web dev",

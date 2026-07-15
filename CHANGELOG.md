@@ -37,7 +37,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Playwright E2E test suite with 3 specs: `fan-chat`, `volunteer-dashboard`,
   `incident-workflow`. Auto-starts Vite dev server; CI job uploads HTML report
-  + traces on failure.
+  - traces on failure.
 - 25 new unit tests (111 total, up from 86): `tools.test.ts` (tool dispatchers),
   `predictCrush.test.ts` (regression logic), `isComplexQuery` tests in
   `intent.test.ts`.
